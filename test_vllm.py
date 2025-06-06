@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Simple test for vLLM hosted model"""
-
+import os
 from litellm import completion
 
 # Configuration - change these to match your setup
-BASE_URL = "localhost,127.0.0.1,::1,0.0.0.0"
+BASE_URL = "http://127.0.0.1:8000/v1"
 MODEL_NAME = "Qwen/Qwen3-8B"
+os.environ['no_proxy'] = 'localhost,127.0.0.1,::1,0.0.0.0'
+os.environ['NO_PROXY'] = 'localhost,127.0.0.1,::1,0.0.0.0'
 
 def test_vllm():
     print(f"Testing vLLM model: {MODEL_NAME} at {BASE_URL}")
