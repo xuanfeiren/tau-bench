@@ -4,7 +4,7 @@
 from litellm import completion
 
 # Configuration - change these to match your setup
-BASE_URL = "http://localhost:8000"
+BASE_URL = "localhost,127.0.0.1,::1,0.0.0.0"
 MODEL_NAME = "Qwen/Qwen3-8B"
 
 def test_vllm():
