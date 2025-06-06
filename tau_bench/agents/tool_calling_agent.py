@@ -42,6 +42,7 @@ class ToolCallingAgent(Agent):
                 model=self.model,
                 custom_llm_provider=self.provider,
                 tools=self.tools_info,
+                api_base="http://127.0.0.1:8000/v1",
                 temperature=self.temperature,
             )
             next_message = res.choices[0].message.model_dump()

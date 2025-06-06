@@ -15,27 +15,27 @@ def parse_args() -> RunConfig:
     )
     parser.add_argument(
         "--model",
-        default="gemini-2.0-flash",
+        default="Qwen/Qwen3-8B",
         type=str,
         help="The model to use for the agent",
     )
     parser.add_argument(
         "--model-provider",
         type=str,
-        default="vertex_ai",
+        default="openai",
         choices=provider_list,
         help="The model provider for the agent",
     )
     parser.add_argument(
         "--user-model",
         type=str,
-        default="gemini-2.0-flash",
+        default="Qwen/Qwen3-8B",
         help="The model to use for the user simulator",
     )
     parser.add_argument(
         "--user-model-provider",
         type=str,
-        default="vertex_ai",
+        default="openai",
         choices=provider_list,
         help="The model provider for the user simulator",
     )
