@@ -42,7 +42,7 @@ def parse_args() -> RunConfig:
     parser.add_argument(
         "--agent-strategy",
         type=str,
-        default="tool-calling",
+        default="react",
         choices=["tool-calling", "act", "react", "few-shot"],
     )
     parser.add_argument(
