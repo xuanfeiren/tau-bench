@@ -15,7 +15,7 @@ def parse_args() -> RunConfig:
     )
     parser.add_argument(
         "--model",
-        default="meta-llama/Llama-3.1-8B-Instruct",
+        default="meta-llama/Llama-3.1-70B-Instruct",
         type=str,
         help="The model to use for the agent",
     )
