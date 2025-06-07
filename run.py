@@ -29,7 +29,7 @@ def parse_args() -> RunConfig:
     parser.add_argument(
         "--user-model",
         type=str,
-        default="gpt-4.1",
+        default="gpt-4.1-2025-04-14",
         help="The model to use for the user simulator",
     )
     parser.add_argument(
