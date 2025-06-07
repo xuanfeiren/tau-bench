@@ -37,14 +37,20 @@ class ToolCallingAgent(Agent):
             {"role": "user", "content": obs},
         ]
         for _ in range(max_num_steps):
-            res = completion(
-                messages=messages,
-                model=self.model,
-                custom_llm_provider=self.provider,
-                tools=self.tools_info,
-                api_base="http://127.0.0.1:8000/v1",
-                temperature=self.temperature,
-            )
+            # Prepare completion arguments
+            completion_kwargs = {
+                "messages": messages,
+                "model": self.model,
+                "custom_llm_provider": self.provider,
+                "tools": self.tools_info,
+                "temperature": self.temperature,
+            }
+            
+            # Add api_base only for local/hosted providers
+            if self.provider in ["hosted_vllm", "vllm"]:
+                completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+            
+            res = completion(**completion_kwargs)
             next_message = res.choices[0].message.model_dump()
             cost = res._hidden_params.get("response_cost")
             if cost is not None:

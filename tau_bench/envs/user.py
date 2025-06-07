@@ -44,9 +44,18 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         self.reset()
 
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
-        res = completion(
-            model=self.model, custom_llm_provider=self.provider, messages=messages
-        )
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": self.model,
+            "custom_llm_provider": self.provider,
+            "messages": messages,
+        }
+        
+        # Add api_base only for local/hosted providers
+        if self.provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
         message = res.choices[0].message
         self.messages.append(message.model_dump())
         cost = res._hidden_params.get("response_cost")
@@ -117,9 +126,18 @@ User Response:
 <the user response (this will be parsed and sent to the agent)>"""
 
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
-        res = completion(
-            model=self.model, custom_llm_provider=self.provider, messages=messages
-        )
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": self.model,
+            "custom_llm_provider": self.provider,
+            "messages": messages,
+        }
+        
+        # Add api_base only for local/hosted providers
+        if self.provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
         message = res.choices[0].message
         self.messages.append(message.model_dump())
         cost = res._hidden_params.get("response_cost")
@@ -168,9 +186,18 @@ class VerifyUserSimulationEnv(LLMUserSimulationEnv):
         attempts = 0
         cur_message = None
         while attempts < self.max_attempts:
-            res = completion(
-                model=self.model, custom_llm_provider=self.provider, messages=messages
-            )
+            # Prepare completion arguments
+            completion_kwargs = {
+                "model": self.model,
+                "custom_llm_provider": self.provider,
+                "messages": messages,
+            }
+            
+            # Add api_base only for local/hosted providers
+            if self.provider in ["hosted_vllm", "vllm"]:
+                completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+            
+            res = completion(**completion_kwargs)
             cur_message = res.choices[0].message
             cost = res._hidden_params.get("response_cost")
             self.total_cost = cost if cost is not None else 0.0
@@ -230,11 +257,18 @@ Your answer will be parsed, so do not include any other text than the classifica
 -----
 
 Classification:"""
-    res = completion(
-        model=model,
-        custom_llm_provider=provider,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    # Prepare completion arguments
+    completion_kwargs = {
+        "model": model,
+        "custom_llm_provider": provider,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    
+    # Add api_base only for local/hosted providers
+    if provider in ["hosted_vllm", "vllm"]:
+        completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+    
+    res = completion(**completion_kwargs)
     return "true" in res.choices[0].message.content.lower()
 
 
@@ -264,11 +298,18 @@ Reflection:
 
 Response:
 <the response (this will be parsed and sent to the agent)>"""
-    res = completion(
-        model=model,
-        custom_llm_provider=provider,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    # Prepare completion arguments
+    completion_kwargs = {
+        "model": model,
+        "custom_llm_provider": provider,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    
+    # Add api_base only for local/hosted providers
+    if provider in ["hosted_vllm", "vllm"]:
+        completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+    
+    res = completion(**completion_kwargs)
     _, response = res.choices[0].message.content.split("Response:")
     return response.strip()
 

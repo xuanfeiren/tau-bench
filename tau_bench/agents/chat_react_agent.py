@@ -37,12 +37,19 @@ class ChatReActAgent(Agent):
     def generate_next_step(
         self, messages: List[Dict[str, Any]]
     ) -> Tuple[Dict[str, Any], Action, float]:
-        res = completion(
-            model=self.model,
-            custom_llm_provider=self.provider,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": self.model,
+            "custom_llm_provider": self.provider,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        
+        # Add api_base only for local/hosted providers
+        if self.provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
         message = res.choices[0].message
         action_str = message.content.split("Action:")[-1].strip()
         try:
