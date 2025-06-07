@@ -29,13 +29,13 @@ def parse_args() -> RunConfig:
     parser.add_argument(
         "--user-model",
         type=str,
-        default="gemini-2.0-flash",
+        default="gpt-4.1",
         help="The model to use for the user simulator",
     )
     parser.add_argument(
         "--user-model-provider",
         type=str,
-        default="vertex_ai",
+        default="openai",
         choices=provider_list,
         help="The model provider for the user simulator",
     )
