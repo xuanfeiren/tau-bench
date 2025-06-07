@@ -46,7 +46,10 @@ class ToolCallingAgent(Agent):
                 temperature=self.temperature,
             )
             next_message = res.choices[0].message.model_dump()
-            total_cost += res._hidden_params["response_cost"]
+            cost = res._hidden_params.get("response_cost")
+            if cost is not None:
+                total_cost += cost
+            # Skip cost tracking for vLLM/local models where cost is None
             action = message_to_action(next_message)
             env_response = env.step(action)
             reward = env_response.reward

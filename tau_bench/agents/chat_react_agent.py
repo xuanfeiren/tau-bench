@@ -56,7 +56,8 @@ class ChatReActAgent(Agent):
         assert "name" in action_parsed
         assert "arguments" in action_parsed
         action = Action(name=action_parsed["name"], kwargs=action_parsed["arguments"])
-        return message.model_dump(), action, res._hidden_params["response_cost"]
+        cost = res._hidden_params.get("response_cost")
+        return message.model_dump(), action, cost
 
     def solve(
         self, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30
@@ -83,7 +84,9 @@ class ChatReActAgent(Agent):
                     {"role": "user", "content": obs},
                 ]
             )
-            total_cost += cost
+            if cost is not None:
+                total_cost += cost
+            # Skip cost tracking for vLLM/local models where cost is None
             if response.done:
                 break
         return SolveResult(
