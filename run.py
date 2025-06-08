@@ -40,7 +40,7 @@ def parse_args() -> RunConfig:
         help="The model provider for the user simulator",
     )
     parser.add_argument(
-        "r",
+        "--agent-strategy",
         type=str,
         default="react",
         choices=["tool-calling", "act", "react", "few-shot"],
