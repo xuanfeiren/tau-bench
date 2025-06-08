@@ -15,7 +15,7 @@ def parse_args() -> RunConfig:
     )
     parser.add_argument(
         "--model",
-        default="meta-llama/Llama-3.1-70B-Instruct",
+        default="gemini-2.0-flash",
         type=str,
         help="The model to use for the agent",
     )
@@ -40,7 +40,7 @@ def parse_args() -> RunConfig:
         help="The model provider for the user simulator",
     )
     parser.add_argument(
-        "--agent-strategy",
+        "r",
         type=str,
         default="react",
         choices=["tool-calling", "act", "react", "few-shot"],
