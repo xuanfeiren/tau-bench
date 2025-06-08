@@ -186,6 +186,10 @@ def trim_conversation_messages(messages: list[dict], max_tokens: int = None, mod
     if total_tokens <= token_limit:
         return messages
     
+    # Ensure we always have at least the latest user message for conversation context
+    if not other_messages:
+        return messages  # Only system message, can't trim further
+    
     # Keep system message + most recent messages that fit in budget
     result_messages = []
     if system_message:
@@ -194,17 +198,47 @@ def trim_conversation_messages(messages: list[dict], max_tokens: int = None, mod
     else:
         remaining_tokens = token_limit
     
-    # Add messages from the end (most recent first)
+    # Always try to keep the most recent user message
+    recent_messages = []
     for msg in reversed(other_messages):
-        msg_tokens = approx_num_tokens(str(msg.get("content", "")))
+        msg_content = str(msg.get("content", ""))
+        # Skip messages with empty content to avoid API errors
+        if not msg_content.strip():
+            continue
+            
+        msg_tokens = approx_num_tokens(msg_content)
         if msg_tokens <= remaining_tokens:
-            result_messages.insert(-1 if system_message else 0, msg)
+            recent_messages.insert(0, msg)
             remaining_tokens -= msg_tokens
         else:
             # If we can't fit this message, stop adding more
             break
     
-    return result_messages
+    # Ensure we have at least one non-system message
+    if not recent_messages and other_messages:
+        # If no messages fit, keep just the most recent non-empty message
+        for msg in reversed(other_messages):
+            if msg.get("content", "").strip():
+                recent_messages = [msg]
+                break
+    
+    result_messages.extend(recent_messages)
+    
+    # Final validation - ensure all messages have content
+    valid_messages = []
+    for msg in result_messages:
+        if msg.get("content", "").strip():  # Only keep messages with non-empty content
+            valid_messages.append(msg)
+    
+    # Ensure we always return at least one message
+    if not valid_messages and messages:
+        # Return the last message with content as fallback
+        for msg in reversed(messages):
+            if msg.get("content", "").strip():
+                valid_messages = [msg]
+                break
+    
+    return valid_messages if valid_messages else messages
 
 
 def add_md_close_tag(prompt: str) -> str:
