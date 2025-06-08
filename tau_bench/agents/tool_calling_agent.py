@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
+from tau_bench.model_utils.model.utils import trim_conversation_messages
 
 
 class ToolCallingAgent(Agent):
@@ -37,9 +38,12 @@ class ToolCallingAgent(Agent):
             {"role": "user", "content": obs},
         ]
         for _ in range(max_num_steps):
+            # Trim messages to prevent context window errors
+            trimmed_messages = trim_conversation_messages(messages, model=self.model)
+            
             # Prepare completion arguments
             completion_kwargs = {
-                "messages": messages,
+                "messages": trimmed_messages,
                 "model": self.model,
                 "custom_llm_provider": self.provider,
                 "tools": self.tools_info,

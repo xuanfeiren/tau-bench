@@ -142,6 +142,71 @@ def approx_num_tokens(text: str) -> int:
     return len(text) // 4
 
 
+def trim_conversation_messages(messages: list[dict], max_tokens: int = None, model: str = None) -> list[dict]:
+    """
+    Trim conversation messages to fit within token limit.
+    Keeps system message and recent messages, removing middle messages if needed.
+    
+    Args:
+        messages: List of conversation messages
+        max_tokens: Override token limit (optional)
+        model: Model name to lookup context limit (optional)
+    """
+    if not messages:
+        return messages
+    
+    # Model-specific context limits (conservative values to leave room for response)
+    MODEL_CONTEXT_LIMITS = {
+        "Qwen/Qwen2-0.5B-Instruct": 25000,  # 32768 * 0.75
+        "Qwen/Qwen2-1.5B-Instruct": 25000,  # 32768 * 0.75  
+        "Qwen/Qwen2-7B-Instruct": 95000,    # 131072 * 0.75
+        "Qwen/Qwen2-72B-Instruct": 95000,   # 131072 * 0.75
+        "Qwen/Qwen3-8B": 30000,             # 40960 * 0.75 (conservative)
+        "meta-llama/Meta-Llama-3.1-8B-Instruct": 95000,    # 128000 * 0.75
+        "sierra-research/Meta-Llama-3.1-8B-Instruct": 95000, # 128000 * 0.75
+        "meta-llama/Meta-Llama-3.1-70B-Instruct": 95000,   # 128000 * 0.75
+        "mistralai/Mistral-Nemo-Instruct-2407": 95000,     # 128000 * 0.75
+    }
+    
+    # Determine token limit
+    if max_tokens is not None:
+        token_limit = max_tokens
+    elif model and model in MODEL_CONTEXT_LIMITS:
+        token_limit = MODEL_CONTEXT_LIMITS[model]
+    else:
+        token_limit = 30000  # Default conservative limit
+    
+    # Always keep system message (first message if it's a system message)
+    system_message = messages[0] if messages and messages[0].get("role") == "system" else None
+    other_messages = messages[1:] if system_message else messages
+    
+    # Calculate total token usage
+    total_tokens = sum(approx_num_tokens(str(msg.get("content", ""))) for msg in messages)
+    
+    if total_tokens <= token_limit:
+        return messages
+    
+    # Keep system message + most recent messages that fit in budget
+    result_messages = []
+    if system_message:
+        result_messages.append(system_message)
+        remaining_tokens = token_limit - approx_num_tokens(str(system_message.get("content", "")))
+    else:
+        remaining_tokens = token_limit
+    
+    # Add messages from the end (most recent first)
+    for msg in reversed(other_messages):
+        msg_tokens = approx_num_tokens(str(msg.get("content", "")))
+        if msg_tokens <= remaining_tokens:
+            result_messages.insert(-1 if system_message else 0, msg)
+            remaining_tokens -= msg_tokens
+        else:
+            # If we can't fit this message, stop adding more
+            break
+    
+    return result_messages
+
+
 def add_md_close_tag(prompt: str) -> str:
     return f"{prompt}\n```"
 

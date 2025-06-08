@@ -11,6 +11,7 @@ from tau_bench.types import (
     RESPOND_ACTION_NAME,
     RESPOND_ACTION_FIELD_NAME,
 )
+from tau_bench.model_utils.model.utils import trim_conversation_messages
 from typing import Optional, List, Dict, Any, Tuple
 
 
@@ -37,11 +38,14 @@ class ChatReActAgent(Agent):
     def generate_next_step(
         self, messages: List[Dict[str, Any]]
     ) -> Tuple[Dict[str, Any], Action, float]:
+        # Trim messages to prevent context window errors
+        trimmed_messages = trim_conversation_messages(messages, model=self.model)
+        
         # Prepare completion arguments
         completion_kwargs = {
             "model": self.model,
             "custom_llm_provider": self.provider,
-            "messages": messages,
+            "messages": trimmed_messages,
             "temperature": self.temperature,
         }
         

@@ -5,6 +5,7 @@ import enum
 from litellm import completion
 
 from typing import Optional, List, Dict, Any, Union
+from tau_bench.model_utils.model.utils import trim_conversation_messages
 
 
 class BaseUserSimulationEnv(abc.ABC):
@@ -44,11 +45,14 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         self.reset()
 
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+        # Trim messages to prevent context window errors
+        trimmed_messages = trim_conversation_messages(messages, model=self.model)
+        
         # Prepare completion arguments
         completion_kwargs = {
             "model": self.model,
             "custom_llm_provider": self.provider,
-            "messages": messages,
+            "messages": trimmed_messages,
         }
         
         # Add api_base only for local/hosted providers
@@ -126,11 +130,14 @@ User Response:
 <the user response (this will be parsed and sent to the agent)>"""
 
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+        # Trim messages to prevent context window errors
+        trimmed_messages = trim_conversation_messages(messages, model=self.model)
+        
         # Prepare completion arguments
         completion_kwargs = {
             "model": self.model,
             "custom_llm_provider": self.provider,
-            "messages": messages,
+            "messages": trimmed_messages,
         }
         
         # Add api_base only for local/hosted providers
@@ -186,11 +193,14 @@ class VerifyUserSimulationEnv(LLMUserSimulationEnv):
         attempts = 0
         cur_message = None
         while attempts < self.max_attempts:
+            # Trim messages to prevent context window errors
+            trimmed_messages = trim_conversation_messages(messages, model=self.model)
+            
             # Prepare completion arguments
             completion_kwargs = {
                 "model": self.model,
                 "custom_llm_provider": self.provider,
-                "messages": messages,
+                "messages": trimmed_messages,
             }
             
             # Add api_base only for local/hosted providers
