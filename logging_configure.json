@@ -31,12 +31,12 @@
   "loggers": {
     "vllm.engine.llm_engine": {
       "handlers": ["file_handler", "console_handler"],
-      "level": "INFO",
+      "level": "DEBUG",
       "propagate": false
     },
     "vllm.entrypoints.openai.api_server": {
       "handlers": ["file_handler", "console_handler"],
-      "level": "INFO",
+      "level": "DEBUG",
       "propagate": false
     },
     "vllm": {
