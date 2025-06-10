@@ -15,14 +15,14 @@ def parse_args() -> RunConfig:
     )
     parser.add_argument(
         "--model",
-        default="gemini-2.0-flash",
+        default="gpt-4.1-mini",
         type=str,
         help="The model to use for the agent",
     )
     parser.add_argument(
         "--model-provider",
         type=str,
-        default="hosted_vllm",
+        default="openai",
         choices=provider_list,
         help="The model provider for the agent",
     )
@@ -35,14 +35,14 @@ def parse_args() -> RunConfig:
     parser.add_argument(
         "--user-model-provider",
         type=str,
-        default="vertex_ai",
+        default="gemini",
         choices=provider_list,
         help="The model provider for the user simulator",
     )
     parser.add_argument(
         "--agent-strategy",
         type=str,
-        default="react",
+        default="tool-calling",
         choices=["tool-calling", "act", "react", "few-shot"],
     )
     parser.add_argument(
