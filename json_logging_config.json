@@ -1,0 +1,46 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "json_formatter": {
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s"
+        },
+        "detailed_json_formatter": {
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(filename)s %(lineno)d %(funcName)s %(message)s"
+        }
+    },
+    "handlers": {
+        "json_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "INFO",
+            "formatter": "detailed_json_formatter",
+            "filename": "vllm_requests_json.log",
+            "maxBytes": 10485760,
+            "backupCount": 5
+        },
+        "json_console_handler": {
+            "class": "logging.StreamHandler",
+            "level": "INFO", 
+            "formatter": "json_formatter",
+            "stream": "ext://sys.stdout"
+        }
+    },
+    "loggers": {
+        "vllm.entrypoints.logger": {
+            "handlers": ["json_file_handler"],
+            "level": "INFO",
+            "propagate": false
+        },
+        "vllm": {
+            "handlers": ["json_file_handler"],
+            "level": "DEBUG",
+            "propagate": false
+        }
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": ["json_console_handler"]
+    }
+} 
