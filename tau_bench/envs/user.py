@@ -2,6 +2,8 @@
 
 import abc
 import enum
+import time
+import random
 from litellm import completion
 
 from typing import Optional, List, Dict, Any, Union
@@ -59,13 +61,28 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         if self.provider in ["hosted_vllm", "vllm"]:
             completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
         
-        res = completion(**completion_kwargs)
-        message = res.choices[0].message
-        self.messages.append(message.model_dump())
-        cost = res._hidden_params.get("response_cost")
-        self.total_cost = cost if cost is not None else 0.0
-        # Skip cost tracking for vLLM/local models where cost is None
-        return message.content
+        # Retry logic with exponential backoff for service unavailability
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                res = completion(**completion_kwargs)
+                cur_message = res.choices[0].message
+                cost = res._hidden_params.get("response_cost")
+                self.total_cost = cost if cost is not None else 0.0
+                self.messages.append(cur_message.model_dump())
+                return cur_message.content
+            except Exception as e:
+                if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
+                    # Exponential backoff: 1s, 2s, 4s
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    raise e
+        
+        # This should not be reached, but just in case
+        raise Exception("All retry attempts failed")
 
     def build_system_prompt(self, instruction: Optional[str]) -> str:
         instruction_display = (
@@ -144,13 +161,28 @@ User Response:
         if self.provider in ["hosted_vllm", "vllm"]:
             completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
         
-        res = completion(**completion_kwargs)
-        message = res.choices[0].message
-        self.messages.append(message.model_dump())
-        cost = res._hidden_params.get("response_cost")
-        self.total_cost = cost if cost is not None else 0.0
-        # Skip cost tracking for vLLM/local models where cost is None
-        return self.parse_response(message.content)
+        # Retry logic with exponential backoff for service unavailability
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                res = completion(**completion_kwargs)
+                cur_message = res.choices[0].message
+                cost = res._hidden_params.get("response_cost")
+                self.total_cost = cost if cost is not None else 0.0
+                self.messages.append(cur_message.model_dump())
+                return self.parse_response(cur_message.content)
+            except Exception as e:
+                if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
+                    # Exponential backoff: 1s, 2s, 4s
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    raise e
+        
+        # This should not be reached, but just in case
+        raise Exception("All retry attempts failed")
 
     def reset(self, instruction: Optional[str] = None) -> str:
         self.messages = [

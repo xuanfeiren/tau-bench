@@ -8,7 +8,8 @@ from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
-
+import litellm 
+litellm.drop_params = True
 
 class ToolCallingAgent(Agent):
     def __init__(
