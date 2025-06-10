@@ -1,5 +1,12 @@
-#Run result artifacts
-results/**
+#Run result artifacts - exclude large files but allow summaries
+results/**/*.json
+results/**/*.log
+results/**/*.tmp
+results/**/temp_*
+# But allow result summaries and analysis
+!results/**/summary_*.json
+!results/**/analysis_*.json
+!results/**/README*.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
