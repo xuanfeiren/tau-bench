@@ -10,12 +10,16 @@
         "class": "vllm.logging_utils.NewLineFormatter",
         "datefmt": "%m-%d %H:%M:%S",
         "format": "[%(levelname)s %(asctime)s] %(message)s"
+      },
+      "detailed_formatter": {
+        "class": "logging.Formatter",
+        "format": "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s:%(lineno)d - %(message)s"
       }
     },
     "handlers": {
       "file_handler": {
         "class": "logging.handlers.RotatingFileHandler",
-        "formatter": "vllm_file_formatter",
+        "formatter": "detailed_formatter",
         "filename": "vllm_requests.log",
         "maxBytes": 10485760,
         "backupCount": 5,
@@ -39,9 +43,29 @@
         "level": "DEBUG",  
         "propagate": false
       },
+      "vllm.entrypoints.openai.serving_chat": {
+        "handlers": ["file_handler", "console_handler"],
+        "level": "DEBUG",  
+        "propagate": false
+      },
+      "vllm.entrypoints.openai.serving_completion": {
+        "handlers": ["file_handler", "console_handler"],
+        "level": "DEBUG",  
+        "propagate": false
+      },
+      "vllm.entrypoints.openai.serving_engine": {
+        "handlers": ["file_handler", "console_handler"],
+        "level": "DEBUG",  
+        "propagate": false
+      },
+      "vllm.engine.async_llm_engine": {
+        "handlers": ["file_handler", "console_handler"],
+        "level": "DEBUG",  
+        "propagate": false
+      },
       "vllm": {
-        "handlers": ["console_handler"],
-        "level": "INFO",  
+        "handlers": ["file_handler", "console_handler"],
+        "level": "DEBUG",  
         "propagate": false
       },
       "": { 
