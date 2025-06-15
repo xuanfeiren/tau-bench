@@ -6,7 +6,7 @@ from tau_bench.model_utils.model.completion import approx_cost_for_datapoint, ap
 from tau_bench.model_utils.model.general_model import wrap_temperature
 from tau_bench.model_utils.model.utils import approx_num_tokens
 
-DEFAULT_OPENAI_MODEL = "gpt-4o-2024-08-06"
+DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
 API_KEY_ENV_VAR = "OPENAI_API_KEY"
 
 PRICE_PER_INPUT_TOKEN_MAP = {
