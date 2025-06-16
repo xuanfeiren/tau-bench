@@ -1,0 +1,7 @@
+Output logging started. Saving to: output/tau_bench_output_20250615_160854.txt
+Initializing retail environment with user strategy: llm
+Initializing tool-calling agent with model: gpt-4.1-nano
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+

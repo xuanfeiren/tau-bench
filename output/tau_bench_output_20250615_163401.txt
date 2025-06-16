@@ -1,0 +1,6 @@
+Output logging started. Saving to: output/tau_bench_output_20250615_163401.txt
+Initializing retail environment with user strategy: llm
+Initializing tool-calling agent with model: gpt-4.1-nano
+
+Task Results:
+❌ Failed

@@ -24,7 +24,44 @@ litellm.drop_params = True
 import sys
 import os
 from datetime import datetime
+OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
 
+TASK: You are optimizing a retail customer service agent by modifying:
+1. Tool descriptions - to clarify tool usage and prevent errors
+2. Additional instructions - to provide strategic guidance and best practices
+
+#Variables contains: 
+- Tool schemas with function names, descriptions, and parameters
+- Additional instructions that guide the agent's behavior
+
+#Feedback contains: Either "Correct" (success) or conversation history (failure analysis needed)
+
+INSTRUCTIONS:
+1. If feedback is "Correct": Make minor refinements to maintain successful patterns
+2. If feedback contains conversation history: Analyze failure patterns to identify:
+   - Which tools were used incorrectly or missed
+   - Parameter confusion or formatting errors  
+   - Workflow sequence problems
+   - Missing strategic guidance or best practices
+
+OPTIMIZATION RULES:
+For Tool Information:
+- ONLY modify the 'description' fields of tools
+- NEVER change function names or parameter schemas
+- MUST include ALL original tools in your output
+
+For Additional Instructions:
+- Provide specific guidance based on observed failures
+- Include best practices for retail customer service
+- Add workflow tips and common pitfall warnings
+- Keep instructions concise but actionable
+
+OUTPUT FORMAT:
+Your response must contain ONLY these two sections:
+1. "reasoning": Explain your analysis of the feedback and what needs to be improved
+2. "suggestion": Provide both the complete optimized tool information AND the improved additional instructions
+
+Do not include any other text, explanations, or keywords like TERMINATE."""
 # Redirect all output to file
 def setup_output_logging():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -99,12 +136,13 @@ class ToolCallingAgent(Agent):
     ):
         self.tools_info = node(tools_info, trainable=True)
         self.wiki = wiki
+        self.additional_instructions = node("Here are the additional instructions to help the agent solve the task: ", trainable=True)
         self.model = model
         self.provider = provider
         self.temperature = temperature
 
     @bundle()
-    def solve(self,tools_info, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
+    def solve(self,tools_info, additional_instructions, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
         """Agent solves the task with the given tools_info.
         Args:
             tools_info: The tools_info to use for the task. This is a node that contains information about the tools that the agent can use.
@@ -124,6 +162,7 @@ class ToolCallingAgent(Agent):
         reward = 0.0
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": self.wiki},
+            {"role": "system", "content": additional_instructions},
             {"role": "user", "content": obs},
         ]
         for _ in range(max_num_steps):
@@ -188,7 +227,7 @@ class ToolCallingAgent(Agent):
         
     def forward(self, env, task_index):
         """Forward pass of the agent."""
-        return self.solve(self.tools_info, env, task_index)
+        return self.solve(self.tools_info, self.additional_instructions, env, task_index)
     
         
 
@@ -205,85 +244,21 @@ def message_to_action(
     else:
         return Action(name=RESPOND_ACTION_NAME, kwargs={"content": message["content"]})
 
-
-
-
-
-def main():
-    # Setup output logging
-    log_file_handle, original_stdout, original_stderr = setup_output_logging()
-    
-    try:
-        # Create configuration
-        config = create_run_config()
-        
-        # Initialize environment
-        print(f"Initializing retail environment with user strategy: {config.user_strategy}")
-        env = get_env(
-            config.env,
-            user_strategy=config.user_strategy,
-            user_model=config.user_model,
-            user_provider=config.user_model_provider,
-            task_split=config.task_split,
-            task_index=config.task_ids[0]  # Use the first (and only) task ID
-        )
-        
-        # Initialize agent
-        print(f"Initializing {config.agent_strategy} agent with model: {config.model}")
-
-        initial_tools_info = node(env.tools_info, trainable=True)
-        # print(f"Tools info: {tools_info.data}")
-        
-
-        agent = ToolCallingAgent(
-                tools_info=initial_tools_info,
-                wiki=env.wiki,
-                model=config.model,
-                provider=config.model_provider,
-                temperature=config.temperature
-            )
-        
-        optimizer = OptoPrime(agent.parameters())
-        optimizer.objective = """Optimize the tool descriptions in #Variables to improve agent performance based on #Feedback.
-
-TASK: You are optimizing tool information for a retail customer service agent. The only thing you can change is the tool descriptions. You cannot do anything else to help the agent solve the task.
-
-#Variables contains: Current tool schemas with function names, descriptions, and parameters
-#Feedback contains: Either "Correct" (success) or conversation history (failure analysis needed)
-
-INSTRUCTIONS:
-1. If feedback is "Correct": Make minor refinements to successful tool descriptions
-2. If feedback contains conversation history: Analyze the failure patterns to identify:
-   - Which tools were used incorrectly or missed
-   - Parameter confusion or formatting errors  
-   - Workflow sequence problems
-
-OPTIMIZATION RULES:
-- ONLY modify the 'description' fields of tools
-- NEVER change function names or parameter schemas
-- MUST include ALL original tools in your output
-- Focus on clarity, proper usage guidance, and error prevention
-
-Make targeted improvements to tool descriptions that will help the agent make better decisions and avoid the observed failure patterns. 
-
-OUTPUT FORMAT:
-Your response must contain ONLY these two sections:
-1. "reasoning": Explain your analysis of the feedback and what needs to be improved
-2. "suggestion": Provide the complete optimized tool information with improved descriptions
-
-Do not include any other text, explanations, or keywords like TERMINATE."""
-        output = agent(env=env,task_index=config.task_ids[0]  )
+class TeacherGuide():
+    """Guide that extract reward and feedback from the agent's output."""
+    def __init__(self, env: Env, config: RunConfig):
+        """Initialize the teacher guide."""
+        self.env = env
+        self.config = config
+    def get_feedback(self, output: SolveResult):   
+        """Get feedback from the agent's output."""
         reward, messages, info = output
-        
-        print("\nTask Results:")
-        print(f"✅ Success" if reward.data == 1 else "❌ Failed")
-        # print(f"Info: {result.data.info}")
-        if reward.data == 1:
+        if reward == 1:
             feedback = "Correct"
         else:
             # Include complete message information including tool calls
             conversation_parts = []
-            for msg in messages.data:
+            for msg in messages:
                 msg_str = f"{msg['role']}: {msg.get('content', '')}"
                 
                 # Add tool calls if present
@@ -306,13 +281,70 @@ Do not include any other text, explanations, or keywords like TERMINATE."""
                 conversation_parts.append(msg_str)
             
             feedback = "The agent failed to solve the task. Here is the conversation history: " + "\n".join(conversation_parts)
-            # print(feedback)
-
+        return feedback
         
-        # feedback = result.data.messages
-        optimizer.zero_feedback()
-        optimizer.backward(output, feedback)
-        optimizer.step(verbose=True)
+    def metric(self, output: SolveResult):
+        """Metric for the agent's performance. 1 if the task is solved correctly, 0 otherwise."""
+        reward, messages, info = output
+        return reward
+
+
+def main():
+    # Setup output logging
+    log_file_handle, original_stdout, original_stderr = setup_output_logging()
+    
+    try:
+        # Create configuration
+        tries_to_success = []
+        for i in range(10):
+            num_try = 0
+            config = create_run_config()
+            
+            # Initialize environment
+            print(f"Initializing retail environment with user strategy: {config.user_strategy}")
+            env = get_env(
+                config.env,
+                user_strategy=config.user_strategy,
+                user_model=config.user_model,
+                user_provider=config.user_model_provider,
+                task_split=config.task_split,
+                task_index=config.task_ids[0]  # Use the first (and only) task ID
+            )
+            
+            # Initialize agent
+            print(f"Initializing {config.agent_strategy} agent with model: {config.model}")
+
+            initial_tools_info = node(env.tools_info, trainable=True)
+            # print(f"Tools info: {tools_info.data}")
+
+            agent = ToolCallingAgent(
+                    tools_info=initial_tools_info,
+                    wiki=env.wiki,
+                    model=config.model,
+                    provider=config.model_provider,
+                    temperature=config.temperature
+                )
+            guide = TeacherGuide(env, config)
+            
+            optimizer = OptoPrime(agent.parameters(),max_tokens=40000)
+            optimizer.objective = OBJECTIVE
+            
+            reward = node(0)
+            while reward.data == 0:
+                output = agent(env=env,task_index=config.task_ids[0]  )
+                reward, messages, info = output
+                print("\nTask Results:")
+                print(f"✅ Success" if reward.data == 1 else "❌ Failed")
+                # """Trace optimization steps"""
+                # feedback = guide.get_feedback(output.data)
+                # optimizer.zero_feedback()
+                # optimizer.backward(output, feedback)
+                # optimizer.step(verbose=False)
+                num_try += 1
+            tries_to_success.append(num_try)
+            print(f"Tries to success: {num_try}")
+        
+        print(f"Average number of tries to success: {sum(tries_to_success) / len(tries_to_success)}")
 
     finally:
         # Restore original stdout and stderr before closing file
