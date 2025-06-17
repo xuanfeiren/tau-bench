@@ -2,12 +2,12 @@
 from tau_bench.envs import get_env
 from tau_bench.types import RunConfig
 from tau_bench.envs.user import UserStrategy
-# os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash" # optional
 
 import opto 
-from opto.trace import bundle, node , model
+from opto import trace
 from opto.optimizers import OptoPrime 
-from opto.trace.nodes import GRAPH 
+from opto.trace.nodes import GRAPH
+from opto.trace.modules import Module 
 
 # Copyright Sierra
 
@@ -19,6 +19,10 @@ from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
+from opto.trainer.loggers import WandbLogger
+from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm, BasicSearchAlgorithm
+from opto.trainer.guide import AutoGuide
+
 import litellm 
 litellm.drop_params = True
 
@@ -109,7 +113,7 @@ def create_run_config():
     """Create a RunConfig object with default parameters from run.py"""
     return RunConfig(
         model_provider="openai",
-        user_model_provider="gemini",
+        user_model_provider="vertex_ai",
         model="gpt-4.1-nano",
         user_model="gemini-2.0-flash",
         num_trials=1,
@@ -125,8 +129,8 @@ def create_run_config():
         user_strategy="llm",
         few_shot_displays_path=None
     )
-@model
-class ToolCallingAgent(Agent):
+@trace.model
+class ToolCallingAgent(Module):
     def __init__(
         self,
         tools_info: List[Dict[str, Any]],
@@ -135,14 +139,15 @@ class ToolCallingAgent(Agent):
         provider: str,
         temperature: float = 0.0,
     ):
-        self.tools_info = node(tools_info, trainable=True)
+        super().__init__()
+        self.tools_info = trace.node(tools_info, trainable=True)
         self.wiki = wiki
-        self.additional_instructions = node("Here are the additional instructions to help the agent solve the task: ", trainable=True)
+        self.additional_instructions = trace.node("Here are the additional instructions to help the agent solve the task: ", trainable=True)
         self.model = model
         self.provider = provider
         self.temperature = temperature
 
-    @bundle()
+    @trace.bundle()
     def solve(self,tools_info, additional_instructions, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
         """Agent solves the task with the given tools_info.
         Args:
@@ -226,9 +231,25 @@ class ToolCallingAgent(Agent):
         else:
             return result.reward,result.messages,result.info
         
-    def forward(self, env, task_index):
-        """Forward pass of the agent."""
-        return self.solve(self.tools_info, self.additional_instructions, env, task_index)
+    def forward(self, task_input):
+        """Forward pass of the agent for trainer compatibility.
+        
+        Args:
+            task_input: Task ID (integer) that will be used to reset the environment
+            
+        Returns:
+            The result from solve method
+        """
+        # Get environment from global context (will be set during training)
+        env = getattr(self, '_env', None)
+        if env is None:
+            raise ValueError("Environment not set. Call set_env() before forward pass.")
+        
+        return self.solve(self.tools_info, self.additional_instructions, env, task_input)
+    
+    def set_env(self, env):
+        """Set the environment for this agent."""
+        self._env = env
     
         
 
@@ -245,13 +266,15 @@ def message_to_action(
     else:
         return Action(name=RESPOND_ACTION_NAME, kwargs={"content": message["content"]})
 
-class TeacherGuide():
+class TeacherGuide(AutoGuide):
     """Guide that extract reward and feedback from the agent's output."""
     def __init__(self, env: Env, config: RunConfig):
         """Initialize the teacher guide."""
+        super().__init__()
         self.env = env
         self.config = config
-    def get_feedback(self, output: SolveResult):   
+        
+    def get_feedback(self,task, output: SolveResult,info):   
         """Get feedback from the agent's output."""
         reward, messages, info = output
         if reward == 1:
@@ -282,13 +305,34 @@ class TeacherGuide():
                 conversation_parts.append(msg_str)
             
             feedback = "The agent failed to solve the task. Here is the conversation history: " + "\n".join(conversation_parts)
-        return feedback
+        return reward, feedback
         
-    def metric(self, output: SolveResult):
+    def metric(self,task, output: SolveResult,info):
         """Metric for the agent's performance. 1 if the task is solved correctly, 0 otherwise."""
         reward, messages, info = output
         return reward
+    
 
+def create_retail_dataset(env, num_tasks=10):
+    """Create dataset from retail environment tasks.
+    
+    Args:
+        env: The retail environment
+        num_tasks: Number of tasks to include in dataset
+        
+    Returns:
+        Dictionary with 'inputs' and 'infos' keys for trainer compatibility
+    """
+    inputs = []
+    infos = []
+    
+    for task_id in range(num_tasks):
+        # For trainer compatibility, we use task_id as both input and info
+        # The actual task content will be handled by the environment during agent execution
+        inputs.append(task_id)
+        infos.append(task_id)  # Using same value since TeacherGuide doesn't need ground truth
+    
+    return {'inputs': inputs, 'infos': infos}
 
 def main():
     # Setup output logging
@@ -296,57 +340,96 @@ def main():
     
     try:
         # Create configuration
-        tries_to_success = []
-        for i in range(1):
-            num_try = 0
-            config = create_run_config()
-            
-            # Initialize environment
-            print(f"Initializing retail environment with user strategy: {config.user_strategy}")
-            env = get_env(
-                config.env,
-                user_strategy=config.user_strategy,
-                user_model=config.user_model,
-                user_provider=config.user_model_provider,
-                task_split=config.task_split,
-                task_index=config.task_ids[0]  # Use the first (and only) task ID
-            )
-            
-            # Initialize agent
-            print(f"Initializing {config.agent_strategy} agent with model: {config.model}")
-
-            initial_tools_info = node(env.tools_info, trainable=True)
-            # print(f"Tools info: {tools_info.data}")
-
-            agent = ToolCallingAgent(
-                    tools_info=initial_tools_info,
-                    wiki=env.wiki,
-                    model=config.model,
-                    provider=config.model_provider,
-                    temperature=config.temperature
-                )
-            guide = TeacherGuide(env, config)
-            
-            optimizer = OptoPrime(agent.parameters(),max_tokens=40000)
-            optimizer.objective = OBJECTIVE
-            
-            reward = node(0)
-            # while reward.data == 0:
-            output = agent(env=env,task_index=config.task_ids[0]  )
-            reward, messages, info = output
-            print("\nTask Results:")
-            print(f"✅ Success" if reward.data == 1 else "❌ Failed")
-            # """Trace optimization steps"""
-            feedback = guide.get_feedback(output.data)
-            optimizer.zero_feedback()
-            optimizer.backward(output, feedback)
-            optimizer.step(verbose=True)
-            num_try += 1
-            tries_to_success.append(num_try)
-            print(f"Tries to success: {num_try}")
+        config = create_run_config()
         
-        print(f"Average number of tries to success: {sum(tries_to_success) / len(tries_to_success)}")
+        # Update config to use first 10 tasks
+        config.task_ids = list(range(10))  # Tasks 0-9
+        
+        # Initialize environment
+        print(f"Initializing retail environment with user strategy: {config.user_strategy}")
+        env = get_env(
+            config.env,
+            user_strategy=config.user_strategy,
+            user_model=config.user_model,
+            user_provider=config.user_model_provider,
+            task_split=config.task_split,
+            task_index=0  # Will be overridden during training
+        )
+        
+        # Create dataset from retail tasks
+        print("Creating dataset from retail environment tasks...")
+        train_dataset = create_retail_dataset(env, num_tasks=10)
+        # validate_dataset = create_retail_dataset(env, num_tasks=5)  # Use first 5 for validation
+        test_dataset = create_retail_dataset(env, num_tasks=10)  # Use first 10 for testing
+        
+        print(f"Training samples: {len(train_dataset['inputs'])}")
+        # print(f"Validation samples: {len(validate_dataset['inputs'])}")
+        print(f"Test samples: {len(test_dataset['inputs'])}")
+        
+        # Initialize agent
+        print(f"Initializing {config.agent_strategy} agent with model: {config.model}")
 
+        agent = ToolCallingAgent(
+            tools_info=env.tools_info,
+            wiki=env.wiki,
+            model=config.model,
+            provider=config.model_provider,
+            temperature=config.temperature
+        )
+        
+        # Set environment on agent for trainer compatibility
+        agent.set_env(env)
+        
+        # Initialize guide, optimizer, and logger
+        guide = TeacherGuide(env, config)
+        optimizer = OptoPrime(agent.parameters(), max_tokens=40000)
+        optimizer.objective = OBJECTIVE
+        logger = WandbLogger(project="tau-bench-retail",verbose=False)
+        
+        # Create MinibatchAlgorithm
+        algorithm = MinibatchAlgorithm(
+            agent=agent,
+            optimizer=optimizer,
+            logger=logger,
+            num_threads=1  # Single thread for simplicity
+        )
+        
+        # Prepare training parameters
+        train_params = {
+            "guide": guide,
+            "train_dataset": train_dataset,
+            "num_epochs": 5,
+            "num_threads": 1,
+            "batch_size": 1,  # As requested
+            "test_dataset": test_dataset,
+            # "validate_dataset": validate_dataset,
+            # "validate_guide": guide,  # Use same guide for validation
+            "eval_frequency": 10,  # Evaluate every 5 steps
+            "log_frequency": 1,   # Log every step
+        }
+        
+        # Start training
+        print("Starting training with MinibatchAlgorithm...")
+        print(f"Batch size: {train_params['batch_size']}")
+        print(f"Number of epochs: {train_params['num_epochs']}")
+        
+        import time
+        start_time = time.time()
+        train_scores, test_score = algorithm.train(**train_params)
+        duration = time.time() - start_time
+        
+        print(f"\nTraining completed in {duration:.2f} seconds")
+        print(f"Final score: {test_score:.4f}")
+                
+        avg_train_score = sum(train_scores['train_scores']) / len(train_scores['train_scores'])
+        print(f"Average training score: {avg_train_score:.4f}")
+           
+            
+    except Exception as e:
+        print(f"Error during training: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
     finally:
         # Restore original stdout and stderr before closing file
         sys.stdout = original_stdout
