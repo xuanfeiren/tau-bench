@@ -1,7 +1,0 @@
-Starting training with MinibatchAlgorithm...
-Batch size: 1
-Number of epochs: 10
-[Step 0] [92mAverage test score: 0.1[0m
-Epoch: 0. Iteration: 1
-[Step 1] Instantaneous train score: 0.0
-[Step 1] Average train score: 0.0
