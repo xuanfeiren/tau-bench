@@ -1,0 +1,21 @@
+Output logging started. Saving to: output/tau_bench_output_20250617_212044.txt
+Initializing retail environment with user strategy: llm
+Creating dataset from retail environment tasks...
+Training samples: 10
+Test samples: 10
+Initializing tool-calling agent with model: gpt-4.1-nano
+Error during training: wandb is required for WandbLogger. Install it with: pip install wandb
+Traceback (most recent call last):
+  File "/Users/xuanfeiren/Documents/tau-bench/Trace/opto/trainer/loggers.py", line 90, in __init__
+    import wandb
+ModuleNotFoundError: No module named 'wandb'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/xuanfeiren/Documents/tau-bench/tau_trainer.py", line 387, in main
+    logger = WandbLogger(project="tau-bench-retail",verbose=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/xuanfeiren/Documents/tau-bench/Trace/opto/trainer/loggers.py", line 92, in __init__
+    raise ImportError("wandb is required for WandbLogger. Install it with: pip install wandb")
+ImportError: wandb is required for WandbLogger. Install it with: pip install wandb

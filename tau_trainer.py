@@ -67,47 +67,7 @@ Your response must contain ONLY these two sections:
 2. "suggestion": Provide both the complete optimized tool information AND the improved additional instructions
 
 Do not include any other text, explanations, or keywords like TERMINATE."""
-# Redirect all output to file
-def setup_output_logging():
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Create output directory if it doesn't exist
-    os.makedirs("output", exist_ok=True)
-    log_file = f"output/tau_bench_output_{timestamp}.txt"
-    
-    # Store original stdout and stderr
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
-    
-    # Create a custom stdout that writes to both console and file
-    class Tee:
-        def __init__(self, *files):
-            self.files = files
-        def write(self, obj):
-            for f in self.files:
-                try:
-                    f.write(obj)
-                    f.flush()
-                except ValueError:
-                    # Handle closed file gracefully
-                    pass
-        def flush(self):
-            for f in self.files:
-                try:
-                    f.flush()
-                except ValueError:
-                    # Handle closed file gracefully
-                    pass
-    
-    # Open log file
-    log_file_handle = open(log_file, 'w')
-    
-    # Redirect stdout and stderr to both console and file
-    sys.stdout = Tee(original_stdout, log_file_handle)
-    sys.stderr = Tee(original_stderr, log_file_handle)
-    
-    print(f"Output logging started. Saving to: {log_file}")
-    return log_file_handle, original_stdout, original_stderr
+
 
 def create_run_config():
     """Create a RunConfig object with default parameters from run.py"""
@@ -335,8 +295,6 @@ def create_retail_dataset(env, num_tasks=10):
     return {'inputs': inputs, 'infos': infos}
 
 def main():
-    # Setup output logging
-    log_file_handle, original_stdout, original_stderr = setup_output_logging()
     
     try:
         # Create configuration
@@ -358,9 +316,9 @@ def main():
         
         # Create dataset from retail tasks
         print("Creating dataset from retail environment tasks...")
-        train_dataset = create_retail_dataset(env, num_tasks=10)
+        train_dataset = create_retail_dataset(env, num_tasks=1)
         # validate_dataset = create_retail_dataset(env, num_tasks=5)  # Use first 5 for validation
-        test_dataset = create_retail_dataset(env, num_tasks=10)  # Use first 10 for testing
+        test_dataset = create_retail_dataset(env, num_tasks=1)  # Use first 10 for testing
         
         print(f"Training samples: {len(train_dataset['inputs'])}")
         # print(f"Validation samples: {len(validate_dataset['inputs'])}")
@@ -384,7 +342,7 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=40000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail",verbose=False)
+        logger = WandbLogger(project="tau-bench-retail",verbose=True)
         
         # Create MinibatchAlgorithm
         algorithm = MinibatchAlgorithm(
@@ -398,7 +356,7 @@ def main():
         train_params = {
             "guide": guide,
             "train_dataset": train_dataset,
-            "num_epochs": 5,
+            "num_epochs": 20,
             "num_threads": 1,
             "batch_size": 1,  # As requested
             "test_dataset": test_dataset,
@@ -406,6 +364,7 @@ def main():
             # "validate_guide": guide,  # Use same guide for validation
             "eval_frequency": 10,  # Evaluate every 5 steps
             "log_frequency": 1,   # Log every step
+            "ensure_improvement": True # Ensure improvement
         }
         
         # Start training
@@ -421,7 +380,7 @@ def main():
         print(f"\nTraining completed in {duration:.2f} seconds")
         print(f"Final score: {test_score:.4f}")
                 
-        avg_train_score = sum(train_scores['train_scores']) / len(train_scores['train_scores'])
+        avg_train_score = sum(train_scores) / len(train_scores)
         print(f"Average training score: {avg_train_score:.4f}")
            
             
@@ -430,14 +389,6 @@ def main():
         import traceback
         traceback.print_exc()
         
-    finally:
-        # Restore original stdout and stderr before closing file
-        sys.stdout = original_stdout
-        sys.stderr = original_stderr
-        
-        # Close log file
-        log_file_handle.close()
-        print("Output logging completed.")
 
 
 if __name__ == "__main__":
