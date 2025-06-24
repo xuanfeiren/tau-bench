@@ -32,6 +32,7 @@ litellm.drop_params = True
 import sys
 import os
 from datetime import datetime
+os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash"
 OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
 
 TASK: You are optimizing a retail customer service agent by modifying:
@@ -93,7 +94,7 @@ def create_run_config():
         few_shot_displays_path=None
     )
 @trace.model
-class ToolCallingAgent(Module):
+class ToolCallingAgent(Agent):
     def __init__(
         self,
         tools_info: List[Dict[str, Any]],
@@ -307,23 +308,23 @@ def main():
                        help='Type of algorithm to use')
     
     # Dataset parameters
-    parser.add_argument('--num_train_samples', type=int, default=1,
+    parser.add_argument('--num_train_samples', type=int, default=10,
                        help='Number of training samples')
-    parser.add_argument('--num_validate_samples', type=int, default=1,
+    parser.add_argument('--num_validate_samples', type=int, default=10,
                        help='Number of validation samples')
-    parser.add_argument('--num_test_samples', type=int, default=1,
+    parser.add_argument('--num_test_samples', type=int, default=10,
                        help='Number of test samples')
     
     # Training parameters
-    parser.add_argument('--num_epochs', type=int, default=20,
+    parser.add_argument('--num_epochs', type=int, default=10,
                        help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=1,
                        help='Training batch size')
-    parser.add_argument('--num_threads', type=int, default=1,
+    parser.add_argument('--num_threads', type=int, default=10,
                        help='Number of threads for parallel processing')
-    parser.add_argument('--eval_frequency', type=int, default=10,
+    parser.add_argument('--eval_frequency', type=int, default=1,
                        help='How often to run evaluation')
-    parser.add_argument('--log_frequency', type=int, default=1,
+    parser.add_argument('--log_frequency', type=int, default=2,
                        help='How often to log results')
     
     # Algorithm-specific parameters
@@ -331,7 +332,7 @@ def main():
                        help='Beam width for beam search algorithms')
     parser.add_argument('--num_proposals', type=int, default=2,
                        help='Number of proposals for search algorithms')
-    parser.add_argument('--max_depth', type=int, default=20,
+    parser.add_argument('--max_depth', type=int, default=10,
                        help='Maximum depth for beam search algorithms')
     parser.add_argument('--max_history_size', type=int, default=12,
                        help='Maximum history size for history-based algorithms')
@@ -341,9 +342,9 @@ def main():
                        help='Maximum buffer size for UCB algorithms')
     parser.add_argument('--ucb_exploration_factor', type=float, default=1.0,
                        help='UCB exploration factor')
-    parser.add_argument('--num_search_iterations', type=int, default=100,
+    parser.add_argument('--num_search_iterations', type=int, default=50,
                        help='Number of search iterations for UCB algorithms')
-    parser.add_argument('--evaluation_batch_size', type=int, default=20,
+    parser.add_argument('--evaluation_batch_size', type=int, default=10,
                        help='Evaluation batch size for UCB algorithms')
     
     # Model parameters
@@ -450,6 +451,7 @@ def main():
         train_params = {
             "guide": guide,
             "train_dataset": train_dataset,
+            "validate_dataset": validate_dataset,
             "num_epochs": args.num_epochs,
             "num_threads": args.num_threads,
             "batch_size": args.batch_size,
