@@ -8,7 +8,7 @@ from opto import trace
 from opto.optimizers import OptoPrime 
 from opto.trace.nodes import GRAPH
 from opto.trace.modules import Module 
-
+import numpy as np
 # Copyright Sierra
 
 import json
@@ -25,53 +25,61 @@ from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm, BasicSe
 from opto.trainer.algorithms.beamsearch_algorithm import BeamsearchAlgorithm, BeamsearchHistoryAlgorithm
 from opto.trainer.algorithms.UCBsearch import UCBSearchAlgorithm
 from opto.trainer.guide import AutoGuide
-
+from opto.trainer.utils import async_run
+from opto.optimizers.utils import print_color
+from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm,  batchify
 import litellm 
 litellm.drop_params = True
 
 import sys
 import os
 from datetime import datetime
-os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash"
-OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
 
-TASK: You are optimizing a retail customer service agent by modifying:
-1. Tool descriptions - to clarify tool usage and prevent errors
-2. Additional instructions - to provide strategic guidance and best practices
+def evaluate(agent, guide, inputs, infos, min_score=None, num_threads=None, description=None):
+    """ Evaluate the agent on the inputs and return the scores
 
-#Variables contains: 
-- Tool schemas with function names, descriptions, and parameters
-- Additional instructions that guide the agent's behavior
+    Args:
+        agent: The agent to evaluate
+        guide: The guide to use for evaluation
+        inputs: List of inputs to evaluate on
+        infos: List of additional information for each input
+        min_score: Minimum score to return when an exception occurs
+        num_threads: Maximum number of threads to use for parallel evaluation
+        description: Description to display in the progress bar
+    """
 
-#Feedback contains: Either "Correct" (success) or conversation history (failure analysis needed)
+    def evaluate_single(i):
+        try:
+            """create a new env for each thread"""
+            env = get_env(
+            env_name="retail",
+            user_strategy="llm",
+            user_model="gemini-2.0-flash",
+            user_provider="vertex_ai",
+            task_split="test",
+            task_index=0  # Will be overridden during training
+        )
+            agent.set_env(env)
 
-INSTRUCTIONS:
-1. If feedback is "Correct": Make minor refinements to maintain successful patterns
-2. If feedback contains conversation history: Analyze failure patterns to identify:
-   - Which tools were used incorrectly or missed
-   - Parameter confusion or formatting errors  
-   - Workflow sequence problems
-   - Missing strategic guidance or best practices
+            output = agent(inputs[i]).data
+            score = guide.metric(inputs[i], output, infos[i])
+        except:
+            score = min_score
+        return score
 
-OPTIMIZATION RULES:
-For Tool Information:
-- ONLY modify the 'description' fields of tools
-- NEVER change function names or parameter schemas
-- MUST include ALL original tools in your output
-
-For Additional Instructions:
-- Provide specific guidance based on observed failures
-- Include best practices for retail customer service
-- Add workflow tips and common pitfall warnings
-- Keep instructions concise but actionable
-
-OUTPUT FORMAT:
-Your response must contain ONLY these two sections:
-1. "reasoning": Explain your analysis of the feedback and what needs to be improved
-2. "suggestion": Provide both the complete optimized tool information AND the improved additional instructions
-
-Do not include any other text, explanations, or keywords like TERMINATE."""
-
+    N = len(inputs)
+    assert len(inputs) == len(infos), "Inputs and infos must have the same length"
+    # Use asyncio if num_threads is not None and > 1
+    use_asyncio = num_threads is not None and num_threads > 1
+    if use_asyncio:
+        # Use provided description or generate a default one
+        eval_description = description or f"Evaluating {N} examples"
+        scores = async_run([evaluate_single] * N, [(i,) for i in range(N)],
+                          max_workers=num_threads,
+                          description=eval_description) # list of tuples
+    else:
+        scores = [evaluate_single(i) for i in range(N)]
+    return scores
 
 def create_run_config():
     """Create a RunConfig object with default parameters from run.py"""
@@ -94,7 +102,7 @@ def create_run_config():
         few_shot_displays_path=None
     )
 @trace.model
-class ToolCallingAgent(Agent):
+class ToolCallingAgent(Module):
     def __init__(
         self,
         tools_info: List[Dict[str, Any]],
@@ -297,76 +305,8 @@ def create_retail_dataset(env, num_tasks=10):
         infos.append(task_id)  # Using same value since TeacherGuide doesn't need ground truth
     
     return {'inputs': inputs, 'infos': infos}
-
-def main():
-    """Main function with command line argument support for algorithm selection."""
-    parser = argparse.ArgumentParser(description='Train agent using various algorithms')
-    
-    # Algorithm parameters
-    parser.add_argument('--algorithm_type', type=str, default='beamsearch',
-                       choices=['minibatch', 'basicsearch', 'beamsearch', 'beamsearchhistory', 'UCBsearch'],
-                       help='Type of algorithm to use')
-    
-    # Dataset parameters
-    parser.add_argument('--num_train_samples', type=int, default=10,
-                       help='Number of training samples')
-    parser.add_argument('--num_validate_samples', type=int, default=10,
-                       help='Number of validation samples')
-    parser.add_argument('--num_test_samples', type=int, default=10,
-                       help='Number of test samples')
-    
-    # Training parameters
-    parser.add_argument('--num_epochs', type=int, default=10,
-                       help='Number of training epochs')
-    parser.add_argument('--batch_size', type=int, default=1,
-                       help='Training batch size')
-    parser.add_argument('--num_threads', type=int, default=10,
-                       help='Number of threads for parallel processing')
-    parser.add_argument('--eval_frequency', type=int, default=2,
-                       help='How often to run evaluation')
-    parser.add_argument('--log_frequency', type=int, default=1,
-                       help='How often to log results')
-    
-    # Algorithm-specific parameters
-    parser.add_argument('--beam_width', type=int, default=3,
-                       help='Beam width for beam search algorithms')
-    parser.add_argument('--num_proposals', type=int, default=2,
-                       help='Number of proposals for search algorithms')
-    parser.add_argument('--max_depth', type=int, default=10,
-                       help='Maximum depth for beam search algorithms')
-    parser.add_argument('--max_history_size', type=int, default=12,
-                       help='Maximum history size for history-based algorithms')
-    
-    # UCB algorithm-specific parameters
-    parser.add_argument('--max_buffer_size', type=int, default=10,
-                       help='Maximum buffer size for UCB algorithms')
-    parser.add_argument('--ucb_exploration_factor', type=float, default=1.0,
-                       help='UCB exploration factor')
-    parser.add_argument('--num_search_iterations', type=int, default=50,
-                       help='Number of search iterations for UCB algorithms')
-    parser.add_argument('--evaluation_batch_size', type=int, default=10,
-                       help='Evaluation batch size for UCB algorithms')
-    
-    # Model parameters
-    parser.add_argument('--model', type=str, default='gpt-4.1-nano',
-                       help='Model to use for the agent')
-    parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
-                       help='Model to use for the user')
-    
-    args = parser.parse_args()
-    
-    try:
-        # Create configuration
-        config = create_run_config()
-        
-        # Update config with command line arguments
-        config.model = args.model
-        config.user_model = args.user_model
-        config.task_ids = list(range(max(args.num_train_samples, args.num_validate_samples, args.num_test_samples)))
-        
-        # Initialize environment
-        print(f"Initializing retail environment with user strategy: {config.user_strategy}")
-        env = get_env(
+config = create_run_config()
+env = get_env(
             config.env,
             user_strategy=config.user_strategy,
             user_model=config.user_model,
@@ -374,21 +314,11 @@ def main():
             task_split=config.task_split,
             task_index=0  # Will be overridden during training
         )
-        
-        # Create dataset from retail tasks
-        print("Creating dataset from retail environment tasks...")
-        train_dataset = create_retail_dataset(env, num_tasks=args.num_train_samples)
-        validate_dataset = create_retail_dataset(env, num_tasks=args.num_validate_samples)
-        test_dataset = create_retail_dataset(env, num_tasks=args.num_test_samples)
-        
-        print(f"Training samples: {len(train_dataset['inputs'])}")
-        print(f"Validation samples: {len(validate_dataset['inputs'])}")
-        print(f"Test samples: {len(test_dataset['inputs'])}")
-        
-        # Initialize agent
-        print(f"Initializing {config.agent_strategy} agent with model: {config.model}")
+train_dataset = create_retail_dataset(env, num_tasks=10)
+validate_dataset = create_retail_dataset(env, num_tasks=10)
+test_dataset = create_retail_dataset(env, num_tasks=10)
 
-        agent = ToolCallingAgent(
+agent = ToolCallingAgent(
             tools_info=env.tools_info,
             wiki=env.wiki,
             model=config.model,
@@ -396,117 +326,39 @@ def main():
             temperature=config.temperature
         )
         
-        # Set environment on agent for trainer compatibility
-        agent.set_env(env)
-        
-        # Initialize guide, optimizer, and logger
-        guide = TeacherGuide(env, config)
-        optimizer = OptoPrime(agent.parameters(), max_tokens=40000)
-        optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail", verbose=True, name=args.algorithm_type)
-        
-        # Create algorithm based on type
-        print(f"Creating {args.algorithm_type} algorithm...")
-        if args.algorithm_type == 'minibatch':
-            algorithm = MinibatchAlgorithm(
-                agent=agent,
-                optimizer=optimizer,
-                logger=logger,
-                num_threads=args.num_threads
-            )
-        elif args.algorithm_type == 'basicsearch':
-            algorithm = BasicSearchAlgorithm(
-                agent=agent,
-                optimizer=optimizer,
-                logger=logger,
-                num_threads=args.num_threads
-            )
-        elif args.algorithm_type == 'beamsearch':
-            algorithm = BeamsearchAlgorithm(
-                agent=agent,
-                optimizer=optimizer,
-                logger=logger,
-                num_threads=args.num_threads
-            )
-        elif args.algorithm_type == 'beamsearchhistory':
-            algorithm = BeamsearchHistoryAlgorithm(
-                agent=agent,
-                optimizer=optimizer,
-                logger=logger,
-                num_threads=args.num_threads
-            )
-        elif args.algorithm_type == 'UCBsearch':
-            algorithm = UCBSearchAlgorithm(
-                agent=agent,
-                optimizer=optimizer,
-                logger=logger,
-                num_threads=args.num_threads,
-                max_buffer_size=args.max_buffer_size,
-                ucb_exploration_factor=args.ucb_exploration_factor
-            )
-        else:
-            raise ValueError(f"Unknown algorithm type: {args.algorithm_type}")
-        
-        # Prepare training parameters
-        train_params = {
-            "guide": guide,
-            "train_dataset": train_dataset,
-            "validate_dataset": validate_dataset,
-            "num_epochs": args.num_epochs,
-            "num_threads": args.num_threads,
-            "batch_size": args.batch_size,
-            "test_dataset": test_dataset,
-            "eval_frequency": args.eval_frequency,
-            "log_frequency": args.log_frequency,
-            "ensure_improvement": False
-        }
-        
-        # Add algorithm-specific parameters
-        if args.algorithm_type in ['beamsearch', 'beamsearchhistory']:
-            train_params.update({
-                "beam_width": args.beam_width,
-                "num_proposals": args.num_proposals,
-                "max_depth": args.max_depth,
-                "validation_dataset_size": args.num_validate_samples
-            })
-            
-            if args.algorithm_type == 'beamsearchhistory':
-                train_params["max_history_size"] = args.max_history_size
-                
-        elif args.algorithm_type == 'basicsearch':
-            train_params["num_proposals"] = args.num_proposals
-        
-        elif args.algorithm_type == 'UCBsearch':
-            train_params.update({
-                "num_search_iterations": args.num_search_iterations,
-                "train_batch_size": args.batch_size,
-                "evaluation_batch_size": args.evaluation_batch_size,
-                "validation_dataset_size": args.num_validate_samples
-            })
-        
-        # Start training
-        print(f"Starting training with {args.algorithm_type} algorithm...")
-        print(f"Batch size: {args.batch_size}")
-        print(f"Number of epochs: {args.num_epochs}")
-        print(f"Number of threads: {args.num_threads}")
-        
-        import time
-        start_time = time.time()
-        metrics, test_score = algorithm.train(**train_params)
-        duration = time.time() - start_time
-        
-        print(f"\nTraining completed in {duration:.2f} seconds")
-        print(f"Final score: {test_score:.4f}")
-                
-        # avg_train_score = sum(train_scores) / len(train_scores)
-        # print(f"Average training score: {avg_train_score:.4f}")
-           
-            
-    except Exception as e:
-        print(f"Error during training: {str(e)}")
-        import traceback
-        traceback.print_exc()
+# Set environment on agent for trainer compatibility
+agent.set_env(env)
+
+# Initialize guide, optimizer, and logger
+guide = TeacherGuide(env, config)
+
+print("Evaluating initial parameters on test set, with 1 thread")
+
+# for _ in range(5):
+#     initial_test_scores = evaluate(
+#         agent,
+#         guide,
+#         test_dataset['inputs'],
+#         test_dataset['infos'],
+#         min_score=0,
+#         num_threads=1,
+#         description="Evaluating initial parameters on test set"
+#     )
+#     initial_test_score = np.mean(initial_test_scores) if all([s is not None for s in initial_test_scores]) else -np.inf
+#     print_color(f"Initial test score: {initial_test_score:.4f}", 'yellow')
 
 
-if __name__ == "__main__":
-    main() 
+print("Evaluating initial parameters on test set, with 10 threads")
+
+for _ in range(1):
+    initial_test_scores = evaluate(
+        agent,
+        guide,
+        test_dataset['inputs'],
+        test_dataset['infos'],
+        min_score=0,
+        num_threads=10,
+        description="Evaluating initial parameters on test set"
+    )
+    initial_test_score = np.mean(initial_test_scores) if all([s is not None for s in initial_test_scores]) else -np.inf
+    print_color(f"Initial test score: {initial_test_score:.4f}", 'yellow')
