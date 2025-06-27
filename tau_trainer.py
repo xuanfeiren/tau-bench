@@ -23,7 +23,7 @@ from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger
 from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm, BasicSearchAlgorithm
 from opto.trainer.algorithms.beamsearch_algorithm import BeamsearchAlgorithm, BeamsearchHistoryAlgorithm
-from opto.trainer.algorithms.UCBsearch import UCBSearchAlgorithm
+from opto.trainer.algorithms.UCBsearch import UCBSearchAlgorithm, UCBSearchParallelAlgorithm, HybridUCB_LLM, UCBSearchFunctionApproximationAlgorithm
 from opto.trainer.guide import AutoGuide
 
 import litellm 
@@ -303,8 +303,8 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using various algorithms')
     
     # Algorithm parameters
-    parser.add_argument('--algorithm_type', type=str, default='beamsearch',
-                       choices=['minibatch', 'basicsearch', 'beamsearch', 'beamsearchhistory', 'UCBsearch'],
+    parser.add_argument('--algorithm_type', type=str, default='HybridUCB_LLM',
+                       choices=['minibatch', 'basicsearch', 'beamsearch', 'beamsearchhistory', 'UCBsearch', 'UCBsearchparallel', 'HybridUCB_LLM', 'UCBSearchFunctionApproximationAlgorithm'],
                        help='Type of algorithm to use')
     
     # Dataset parameters
@@ -322,7 +322,7 @@ def main():
                        help='Training batch size')
     parser.add_argument('--num_threads', type=int, default=10,
                        help='Number of threads for parallel processing')
-    parser.add_argument('--eval_frequency', type=int, default=2,
+    parser.add_argument('--eval_frequency', type=int, default=10, # no test for debugging
                        help='How often to run evaluation')
     parser.add_argument('--log_frequency', type=int, default=1,
                        help='How often to log results')
@@ -338,14 +338,24 @@ def main():
                        help='Maximum history size for history-based algorithms')
     
     # UCB algorithm-specific parameters
-    parser.add_argument('--max_buffer_size', type=int, default=10,
+    parser.add_argument('--max_buffer_size', type=int, default=1000,
                        help='Maximum buffer size for UCB algorithms')
-    parser.add_argument('--ucb_exploration_factor', type=float, default=1.0,
+    parser.add_argument('--ucb_exploration_factor', type=float, default=0.3,
                        help='UCB exploration factor')
-    parser.add_argument('--num_search_iterations', type=int, default=50,
+    parser.add_argument('--num_search_iterations', type=int, default=10,
                        help='Number of search iterations for UCB algorithms')
     parser.add_argument('--evaluation_batch_size', type=int, default=10,
                        help='Evaluation batch size for UCB algorithms')
+    
+    # UCB Parallel algorithm-specific parameters
+    parser.add_argument('--parallel_k', type=int, default=3,
+                       help='Number of top candidates to process in parallel for UCBsearchparallel')
+    
+    # HybridUCB_LLM algorithm-specific parameters
+    parser.add_argument('--alpha', type=float, default=0.3,
+                       help='Probability of using UCB path vs LLM path in HybridUCB_LLM')
+    parser.add_argument('--llm_model', type=str, default='gemini/gemini-2.0-flash',
+                       help='LLM model to use for candidate generation in LLM-based algorithms')
     
     # Model parameters
     parser.add_argument('--model', type=str, default='gpt-4.1-nano',
@@ -403,7 +413,7 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=40000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail", verbose=True, name=args.algorithm_type)
+        logger = WandbLogger(project="tau-bench-retail-ucb-debug", verbose=True, name=args.algorithm_type)
         
         # Create algorithm based on type
         print(f"Creating {args.algorithm_type} algorithm...")
@@ -444,6 +454,37 @@ def main():
                 max_buffer_size=args.max_buffer_size,
                 ucb_exploration_factor=args.ucb_exploration_factor
             )
+        elif args.algorithm_type == 'UCBsearchparallel':
+            algorithm = UCBSearchParallelAlgorithm(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                max_buffer_size=args.max_buffer_size,
+                ucb_exploration_factor=args.ucb_exploration_factor,
+                parallel_k=args.parallel_k
+            )
+        elif args.algorithm_type == 'HybridUCB_LLM':
+            algorithm = HybridUCB_LLM(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                max_buffer_size=args.max_buffer_size,
+                ucb_exploration_factor=args.ucb_exploration_factor,
+                alpha=args.alpha,
+                llm_model=args.llm_model
+            )
+        elif args.algorithm_type == 'UCBSearchFunctionApproximationAlgorithm':
+            algorithm = UCBSearchFunctionApproximationAlgorithm(
+                llm_model=args.llm_model,
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                max_buffer_size=args.max_buffer_size,
+                ucb_exploration_factor=args.ucb_exploration_factor
+            )
         else:
             raise ValueError(f"Unknown algorithm type: {args.algorithm_type}")
         
@@ -476,13 +517,24 @@ def main():
         elif args.algorithm_type == 'basicsearch':
             train_params["num_proposals"] = args.num_proposals
         
-        elif args.algorithm_type == 'UCBsearch':
+        elif args.algorithm_type in ['UCBsearch', 'UCBsearchparallel', 'UCBSearchFunctionApproximationAlgorithm']:
             train_params.update({
                 "num_search_iterations": args.num_search_iterations,
                 "train_batch_size": args.batch_size,
                 "evaluation_batch_size": args.evaluation_batch_size,
                 "validation_dataset_size": args.num_validate_samples
             })
+        
+        elif args.algorithm_type == 'HybridUCB_LLM':
+            # HybridUCB_LLM has different training parameters
+            train_params.update({
+                "num_search_iterations": args.num_search_iterations,
+                "train_batch_size": args.batch_size,
+                "evaluation_batch_size": args.evaluation_batch_size
+            })
+            # Remove parameters that HybridUCB_LLM doesn't use
+            train_params.pop("validate_dataset", None)
+            train_params.pop("num_epochs", None)
         
         # Start training
         print(f"Starting training with {args.algorithm_type} algorithm...")
