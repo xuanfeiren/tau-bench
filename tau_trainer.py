@@ -303,7 +303,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using various algorithms')
     
     # Algorithm parameters
-    parser.add_argument('--algorithm_type', type=str, default='HybridUCB_LLM',
+    parser.add_argument('--algorithm_type', type=str, default='UCBSearchFunctionApproximationAlgorithm',
                        choices=['minibatch', 'basicsearch', 'beamsearch', 'beamsearchhistory', 'UCBsearch', 'UCBsearchparallel', 'HybridUCB_LLM', 'UCBSearchFunctionApproximationAlgorithm'],
                        help='Type of algorithm to use')
     
@@ -324,7 +324,7 @@ def main():
                        help='Number of threads for parallel processing')
     parser.add_argument('--eval_frequency', type=int, default=10, # no test for debugging
                        help='How often to run evaluation')
-    parser.add_argument('--log_frequency', type=int, default=1,
+    parser.add_argument('--log_frequency', type=int, default=5,
                        help='How often to log results')
     
     # Algorithm-specific parameters
@@ -342,7 +342,7 @@ def main():
                        help='Maximum buffer size for UCB algorithms')
     parser.add_argument('--ucb_exploration_factor', type=float, default=0.3,
                        help='UCB exploration factor')
-    parser.add_argument('--num_search_iterations', type=int, default=10,
+    parser.add_argument('--num_search_iterations', type=int, default=30,
                        help='Number of search iterations for UCB algorithms')
     parser.add_argument('--evaluation_batch_size', type=int, default=10,
                        help='Evaluation batch size for UCB algorithms')
