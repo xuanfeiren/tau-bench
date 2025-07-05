@@ -29,6 +29,7 @@ litellm.drop_params = True
 
 import sys
 import os
+import time
 from datetime import datetime
 os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash"
 
@@ -103,7 +104,7 @@ class ToolCallingAgent(Agent):
             {"role": "user", "content": obs},
         ]
         
-        for _ in range(max_num_steps):
+        for step in range(max_num_steps):
             completion_kwargs = {
                 "messages": messages,
                 "model": self.model,
@@ -111,41 +112,114 @@ class ToolCallingAgent(Agent):
                 "tools": tools_info,
                 "temperature": self.temperature,
             }
-            try:
-                res = completion(**completion_kwargs)
             
+            # Retry logic with exponential backoff for entire interaction
+            max_retries = 5
+            base_delay = 1.0
+            step_successful = False
             
-                next_message = res.choices[0].message.model_dump()
-                cost = res._hidden_params.get("response_cost")
-                if cost is not None:
-                    total_cost += cost
+            for retry_attempt in range(max_retries):
+                try:
+                    # Step 1: Get completion from API
+                    res = completion(**completion_kwargs)
                     
-                action = message_to_action(next_message)
-                env_response = env.step(action)
-            except Exception as e:
-                print(f"Error during interaction: {e}")
-                continue
-            reward = env_response.reward
-            info = {**info, **env_response.info.model_dump()}
+                    # Step 2: Process the response
+                    next_message = res.choices[0].message.model_dump()
+                    cost = res._hidden_params.get("response_cost")
+                    if cost is not None:
+                        total_cost += cost
+                    
+                    # Step 3: Convert message to action
+                    action = message_to_action(next_message)
+                    
+                    # Step 4: Execute action in environment
+                    env_response = env.step(action)
+                    
+                    # If we get here, everything succeeded
+                    step_successful = True
+                    break
+                    
+                except Exception as e:
+                    error_str = str(e).lower()
+                    error_type = type(e).__name__.lower()
+                    
+                    # Check if it's a retryable error
+                    retryable_errors = [
+                        'rate limit', 'timeout', 'temporary', 'service unavailable',
+                        'internal server error', 'bad gateway', 'service temporarily unavailable',
+                        'too many requests', 'quota', 'overloaded', 'resource has been exhausted',
+                        'resource_exhausted', 'ratelimiterror', 'quotaexceedederror',
+                        'connection error', 'network', 'json decode'
+                    ]
+                    
+                    # Also check specific litellm exceptions
+                    retryable_exception_types = [
+                        'ratelimiterror', 'timeouterror', 'apiconnectionerror', 
+                        'serviceunavailableerror', 'internalservererror', 'jsondecodeerror'
+                    ]
+                    
+                    is_retryable = (
+                        any(err in error_str for err in retryable_errors) or
+                        any(exc_type in error_type for exc_type in retryable_exception_types) or
+                        'code": 429' in error_str or  # HTTP 429 Too Many Requests
+                        'code": 503' in error_str or  # HTTP 503 Service Unavailable
+                        'code": 502' in error_str or  # HTTP 502 Bad Gateway
+                        'code": 500' in error_str     # HTTP 500 Internal Server Error
+                    )
+                    
+                    if retry_attempt == max_retries - 1:
+                        # Last attempt failed
+                        print(f"Step {step}: Failed after {max_retries} attempts. Error: {e}")
+                        break
+                    elif is_retryable:
+                        # Special handling for rate limit errors - use longer delays
+                        is_rate_limit = (
+                            'rate limit' in error_str or 'ratelimiterror' in error_type or
+                            'quota' in error_str or 'resource has been exhausted' in error_str or
+                            'code": 429' in error_str
+                        )
+                        
+                        if is_rate_limit:
+                            # Longer delays for rate limits: 2, 8, 18, 32, 50 seconds
+                            delay = 2 * (retry_attempt + 1) ** 2 + retry_attempt
+                        else:
+                            # Standard exponential backoff for other errors
+                            delay = base_delay * (2 ** retry_attempt) + (0.1 * retry_attempt)
+                        
+                        error_type_desc = "Rate limit" if is_rate_limit else "Retryable error"
+                        print(f"Step {step}: {error_type_desc} - Retry {retry_attempt + 1}/{max_retries} after {delay:.1f}s. Error: {e}")
+                        time.sleep(delay)
+                    else:
+                        # Non-retryable error
+                        print(f"Step {step}: Non-retryable error: {e}")
+                        break
             
-            if action.name != RESPOND_ACTION_NAME:
-                next_message["tool_calls"] = next_message["tool_calls"][:1]
-                messages.extend([
-                    next_message,
-                    {
-                        "role": "tool",
-                        "tool_call_id": next_message["tool_calls"][0]["id"],
-                        "name": next_message["tool_calls"][0]["function"]["name"],
-                        "content": env_response.observation,
-                    },
-                ])
+            if not step_successful:
+                print(f"Step {step}: Skipping step due to interaction failure")
             else:
-                messages.extend([
-                    next_message,
-                    {"role": "user", "content": env_response.observation},
-                ])
-            if env_response.done:
-                break
+                # Only process results if step was successful
+                reward = env_response.reward
+                info = {**info, **env_response.info.model_dump()}
+                
+                if action.name != RESPOND_ACTION_NAME:
+                    next_message["tool_calls"] = next_message["tool_calls"][:1]
+                    messages.extend([
+                        next_message,
+                        {
+                            "role": "tool",
+                            "tool_call_id": next_message["tool_calls"][0]["id"],
+                            "name": next_message["tool_calls"][0]["function"]["name"],
+                            "content": env_response.observation,
+                        },
+                    ])
+                else:
+                    messages.extend([
+                        next_message,
+                        {"role": "user", "content": env_response.observation},
+                    ])
+                    
+                if env_response.done:
+                    break
                 
         result = SolveResult(reward=reward, info=info, messages=messages, total_cost=total_cost)
         
