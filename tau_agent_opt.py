@@ -114,7 +114,7 @@ class ToolCallingAgent(Agent):
             }
             
             # Retry logic with exponential backoff for entire interaction
-            max_retries = 5
+            max_retries = 10
             base_delay = 1.0
             step_successful = False
             
@@ -125,6 +125,8 @@ class ToolCallingAgent(Agent):
                     
                     # Step 2: Process the response
                     next_message = res.choices[0].message.model_dump()
+                    if retry_attempt >= 1: #debug
+                        print("Completion succeeded.")
                     cost = res._hidden_params.get("response_cost")
                     if cost is not None:
                         total_cost += cost
@@ -140,6 +142,7 @@ class ToolCallingAgent(Agent):
                     break
                     
                 except Exception as e:
+                    print(f"Step {step}: Error: {e}, tring to retry...")
                     error_str = str(e).lower()
                     error_type = type(e).__name__.lower()
                     
