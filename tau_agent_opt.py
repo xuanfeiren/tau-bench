@@ -195,7 +195,7 @@ class ToolCallingAgent(Agent):
                     else:
                         # Non-retryable error
                         print(f"Step {step}: Non-retryable error: {e}")
-                        break
+                        return 0, [], {}
             
             if not step_successful:
                 print(f"Step {step}: Skipping step due to interaction failure")
