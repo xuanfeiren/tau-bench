@@ -20,7 +20,7 @@ from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
-from opto.trainer.loggers import WandbLogger
+from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
 from opto.trainer.guide import AutoGuide
 
@@ -312,7 +312,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using search algorithms')
     
     # Algorithm selection
-    parser.add_argument('--algorithm_name', type=str, default='ExplorewithLLM',
+    parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM'],
                        help='Algorithm to use for training')
     
@@ -327,7 +327,7 @@ def main():
     # Training parameters
     parser.add_argument('--train_batch_size', type=int, default=1,
                        help='Training batch size')
-    parser.add_argument('--num_threads', type=int, default=10,
+    parser.add_argument('--num_threads', type=int, default=40,
                        help='Number of threads for parallel processing')
     parser.add_argument('--eval_frequency', type=int, default=1,
                        help='How often to run evaluation')
@@ -357,7 +357,7 @@ def main():
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the agent')
-    parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
+    parser.add_argument('--user_model', type=str, default='gemini-2.5-flash-lite-preview-06-17',
                        help='Model to use for the user')
     
     args = parser.parse_args()
@@ -419,8 +419,8 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail-explore", verbose=True, name=args.algorithm_name)
-        
+        logger = WandbLogger(project="tau-bench-retail-explore", verbose=True)
+        # logger = DefaultLogger
         # Create algorithm based on selection
         print(f"Creating {args.algorithm_name}...")
         if args.algorithm_name == 'ExploreAlgorithm':

@@ -4,12 +4,13 @@ import litellm
 async def call_llm(i):
     try:
         await litellm.acompletion(
-            model="gemini/gemini-2.5-flash-lite-preview-06-17",
+            model="gemini/gemini-2.0-flash",
             messages=[{"role": "user", "content": f"Hello #{i}"}],
             max_tokens=50
         )
         print(f"{i}: ✅")
     except Exception as e:
+        print(e)
         if "429" in str(e) or "rate limit" in str(e).lower():
             print(f"{i}: 🚫 rate limit")
         else:
