@@ -1,0 +1,8 @@
+{"time":"2025-07-08T20:18:15.2119024-05:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"logs\\wandb\\run-20250708_201814-ur5ucpbb\\logs\\debug-core.log"}
+{"time":"2025-07-08T20:18:15.3927172-05:00","level":"INFO","msg":"stream: created new stream","id":"ur5ucpbb"}
+{"time":"2025-07-08T20:18:15.3927172-05:00","level":"INFO","msg":"stream: started","id":"ur5ucpbb"}
+{"time":"2025-07-08T20:18:15.3927172-05:00","level":"INFO","msg":"handler: started","stream_id":"ur5ucpbb"}
+{"time":"2025-07-08T20:18:15.3927172-05:00","level":"INFO","msg":"sender: started","stream_id":"ur5ucpbb"}
+{"time":"2025-07-08T20:18:15.3927172-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"ur5ucpbb"}
+{"time":"2025-07-08T20:18:15.5742073-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-08T22:12:26.9048174-05:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/xuanfeiren-university-of-wisconsin-madison/tau-bench-retail-explore/ur5ucpbb/file_stream\": dial tcp: lookup api.wandb.ai: no such host"}

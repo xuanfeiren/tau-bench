@@ -1,0 +1,43 @@
+{
+  "os":  "Windows-10-10.0.26100-SP0",
+  "python":  "CPython 3.10.18",
+  "startedAt":  "2025-07-08T18:00:31.396575Z",
+  "program":  "c:\\experiments\\tau-bench\\tau_agent_opt.py",
+  "codePath":  "tau_agent_opt.py",
+  "git":  {
+    "remote":  "https://github.com/xuanfeiren/tau-bench",
+    "commit":  "ff0b827b1251cbe815ce2b0faa1f0c1b86a5dfa0"
+  },
+  "email":  "2754630954@qq.com",
+  "root":  "./logs",
+  "host":  "Xuanfei-Desktop",
+  "executable":  "C:\\Users\\xuanf\\.conda\\envs\\tau\\python.exe",
+  "codePathLocal":  "tau_agent_opt.py",
+  "cpu_count":  10,
+  "cpu_count_logical":  16,
+  "gpu":  "NVIDIA GeForce RTX 4060",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "1023240302592",
+      "used":  "746312364032"
+    }
+  },
+  "memory":  {
+    "total":  "34100047872"
+  },
+  "cpu":  {
+    "count":  10,
+    "countLogical":  16
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4060",
+      "memoryTotal":  "8585740288",
+      "cudaCores":  3072,
+      "architecture":  "Ada",
+      "uuid":  "GPU-e55f5500-caf8-9d83-c3e1-40a5e4df2cee"
+    }
+  ],
+  "cudaVersion":  "12.8"
+}

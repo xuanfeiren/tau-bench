@@ -1,0 +1,28 @@
+Creating ExploreAlgorithm...
+Starting training with ExploreAlgorithm...
+Training batch size: 1
+Number of phases: 5
+UCB horizon: 50
+Number of threads: 3
+Evaluating candidate:   8%|███████                                                                                 | 4/50 [00:50<09:43, 12.68s/it]
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+
+Step 23: Error: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "Resource has been exhausted (e.g. check quota).",
+    "status": "RESOURCE_EXHAUSTED"
+  }
+}
+, tring to retry...
+Step 23: Rate limit - Retry 1/10 after 2.0s. Error: litellm.RateLimitError: litellm.RateLimitError: VertexAIException - {
+  "error": {
+    "code": 429,
+    "message": "Resource has been exhausted (e.g. check quota).",
+    "status": "RESOURCE_EXHAUSTED"
+  }
+}
+
+Completion succeeded.

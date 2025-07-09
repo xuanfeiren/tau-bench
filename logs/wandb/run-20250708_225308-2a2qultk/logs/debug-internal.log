@@ -1,0 +1,7 @@
+{"time":"2025-07-08T22:53:08.9274161-05:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"logs\\wandb\\run-20250708_225308-2a2qultk\\logs\\debug-core.log"}
+{"time":"2025-07-08T22:53:09.1226102-05:00","level":"INFO","msg":"stream: created new stream","id":"2a2qultk"}
+{"time":"2025-07-08T22:53:09.1226102-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"2a2qultk"}
+{"time":"2025-07-08T22:53:09.1226102-05:00","level":"INFO","msg":"sender: started","stream_id":"2a2qultk"}
+{"time":"2025-07-08T22:53:09.1226102-05:00","level":"INFO","msg":"handler: started","stream_id":"2a2qultk"}
+{"time":"2025-07-08T22:53:09.1226102-05:00","level":"INFO","msg":"stream: started","id":"2a2qultk"}
+{"time":"2025-07-08T22:53:09.3364256-05:00","level":"INFO","msg":"Starting system monitor"}

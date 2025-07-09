@@ -1,0 +1,7 @@
+Creating ExploreAlgorithm...
+Starting training with ExploreAlgorithm...
+Training batch size: 1
+Number of phases: 5
+UCB horizon: 50
+Number of threads: 2
+Evaluating candidate:   1%|▊                                                                                                                   | 1/150 [00:11<28:49, 11.61s/it]

@@ -327,7 +327,7 @@ def main():
     # Training parameters
     parser.add_argument('--train_batch_size', type=int, default=1,
                        help='Training batch size')
-    parser.add_argument('--num_threads', type=int, default=40,
+    parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
     parser.add_argument('--eval_frequency', type=int, default=1,
                        help='How often to run evaluation')
