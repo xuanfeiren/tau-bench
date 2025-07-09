@@ -18,7 +18,7 @@ async def call_llm(i):
 
 async def main():
     # Fire off 100 requests in parallel directly
-    for i in range(5000):
+    for i in range(2000):
         asyncio.create_task(call_llm(i))
     
     # Keep running for a bit to see what happens
