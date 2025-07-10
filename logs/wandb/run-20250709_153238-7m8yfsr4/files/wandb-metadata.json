@@ -1,0 +1,44 @@
+{
+  "os":  "macOS-14.6.1-arm64-arm-64bit",
+  "python":  "CPython 3.12.11",
+  "startedAt":  "2025-07-09T20:32:39.244289Z",
+  "program":  "/Users/xuanfeiren/Documents/tau-bench/tau_agent_opt.py",
+  "codePath":  "tau_agent_opt.py",
+  "git":  {
+    "remote":  "https://github.com/xuanfeiren/tau-bench.git",
+    "commit":  "fe6f62a4fa18280088199040feae86504793c55a"
+  },
+  "email":  "2754630954@qq.com",
+  "root":  "./logs",
+  "host":  "Xuanfeis-MacBook-Air.local",
+  "executable":  "/opt/anaconda3/envs/tau/bin/python",
+  "codePathLocal":  "tau_agent_opt.py",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "494384795648",
+      "used":  "150971506688"
+    },
+    "/System/Volumes/Data":  {
+      "total":  "494384795648",
+      "used":  "150971506688"
+    }
+  },
+  "memory":  {
+    "total":  "17179869184"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  8
+  },
+  "apple":  {
+    "name":  "Apple M3",
+    "ecpuCores":  4,
+    "pcpuCores":  4,
+    "gpuCores":  10,
+    "memoryGb":  16,
+    "swapTotalBytes":  "8589934592",
+    "ramTotalBytes":  "17179869184"
+  }
+}

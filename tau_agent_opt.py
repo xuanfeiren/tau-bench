@@ -22,16 +22,18 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
+from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm, BasicSearchAlgorithm
 from opto.trainer.guide import AutoGuide
 
 import litellm 
 litellm.drop_params = True
-
+litellm.suppress_debug_info = True
 import sys
 import os
 import time
 from datetime import datetime
 os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash"
+
 
 OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
 
@@ -125,8 +127,8 @@ class ToolCallingAgent(Agent):
                     
                     # Step 2: Process the response
                     next_message = res.choices[0].message.model_dump()
-                    if retry_attempt >= 1: #debug
-                        print("Completion succeeded.")
+                    # if retry_attempt >= 1: #debug
+                    #     print("Completion succeeded.")
                     cost = res._hidden_params.get("response_cost")
                     if cost is not None:
                         total_cost += cost
@@ -142,7 +144,7 @@ class ToolCallingAgent(Agent):
                     break
                     
                 except Exception as e:
-                    print(f"Step {step}: Error: {e}, tring to retry...")
+                    # print(f"Step {step}: Error: {e}, tring to retry...")
                     error_str = str(e).lower()
                     error_type = type(e).__name__.lower()
                     
@@ -190,7 +192,7 @@ class ToolCallingAgent(Agent):
                             delay = base_delay * (2 ** retry_attempt) + (0.1 * retry_attempt)
                         
                         error_type_desc = "Rate limit" if is_rate_limit else "Retryable error"
-                        print(f"Step {step}: {error_type_desc} - Retry {retry_attempt + 1}/{max_retries} after {delay:.1f}s. Error: {e}")
+                        # print(f"Step {step}: {error_type_desc} - Retry {retry_attempt + 1}/{max_retries} after {delay:.1f}s. Error: {e}")
                         time.sleep(delay)
                     else:
                         # Non-retryable error
@@ -312,8 +314,8 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using search algorithms')
     
     # Algorithm selection
-    parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
-                       choices=['ExploreAlgorithm', 'ExplorewithLLM'],
+    parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
+                       choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm'],
                        help='Algorithm to use for training')
     
     # Dataset parameters
@@ -341,10 +343,16 @@ def main():
                        help='UCB exploration factor')
     parser.add_argument('--num_phases', type=int, default=5,
                        help='Number of training phases')
-    parser.add_argument('--ucb_horizon', type=int, default=50,
+    parser.add_argument('--ucb_horizon_factor', type=int, default=10,
                        help='UCB horizon for best candidate selection')
     parser.add_argument('--num_to_sample', type=int, default=5,
                        help='Number of candidates to sample during exploration')
+    
+    # MinibatchAlgorithm and BasicSearchAlgorithm-specific parameters
+    parser.add_argument('--num_epochs', type=int, default=1,
+                       help='Number of training epochs')
+    parser.add_argument('--num_proposals', type=int, default=3,
+                       help='Number of proposals for BasicSearchAlgorithm')
     
     # ExplorewithLLM-specific parameters
     parser.add_argument('--num_LLM_samples', type=int, default=5,
@@ -357,7 +365,7 @@ def main():
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the agent')
-    parser.add_argument('--user_model', type=str, default='gemini-2.5-flash-lite-preview-06-17',
+    parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the user')
     
     args = parser.parse_args()
@@ -419,7 +427,7 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail-explore", verbose=True)
+        logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=args.algorithm_name)
         # logger = DefaultLogger
         # Create algorithm based on selection
         print(f"Creating {args.algorithm_name}...")
@@ -443,6 +451,20 @@ def main():
                 llm_model=args.llm_model,
                 num_samples_in_prompt=args.num_samples_in_prompt
             )
+        elif args.algorithm_name == 'MinibatchAlgorithm':
+            algorithm = MinibatchAlgorithm(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
+        elif args.algorithm_name == 'BasicSearchAlgorithm':
+            algorithm = BasicSearchAlgorithm(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
         else:
             raise ValueError(f"Unknown algorithm: {args.algorithm_name}")
         
@@ -451,13 +473,17 @@ def main():
             "guide": guide,
             "train_dataset": train_dataset,
             "validation_dataset": validate_dataset,
+            "validate_dataset": validate_dataset,
             "test_dataset": test_dataset,
             "train_batch_size": args.train_batch_size,
+            "batch_size": args.train_batch_size,
+            "num_epochs": args.num_epochs,
+            "num_proposals": args.num_proposals,
             "num_threads": args.num_threads,
             "eval_frequency": args.eval_frequency,
             "log_frequency": args.log_frequency,
             "num_phases": args.num_phases,
-            "ucb_horizon": args.ucb_horizon,
+            "ucb_horizon_factor": args.ucb_horizon_factor,
             "num_to_sample": args.num_to_sample
         }
         
@@ -468,8 +494,7 @@ def main():
         # Start training
         print(f"Starting training with {args.algorithm_name}...")
         print(f"Training batch size: {args.train_batch_size}")
-        print(f"Number of phases: {args.num_phases}")
-        print(f"UCB horizon: {args.ucb_horizon}")
+        # print(f"Number of phases: {args.num_phases}")
         print(f"Number of threads: {args.num_threads}")
         
         import time
