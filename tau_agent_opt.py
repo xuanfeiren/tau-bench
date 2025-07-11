@@ -233,8 +233,8 @@ class ToolCallingAgent(Agent):
             )
             
             if step_result is None:
-                print(f"Step {step}: Skipping step due to interaction failure")
-                continue
+                print(f"Step {step}: Return 0 reward due to interaction failure")
+                return 0, [], {}
             
             # Extract results
             next_message, action, env_response = step_result
