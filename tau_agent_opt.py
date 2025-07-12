@@ -380,7 +380,7 @@ def main():
                        help='UCB exploration factor')
     parser.add_argument('--num_phases', type=int, default=5,
                        help='Number of training phases')
-    parser.add_argument('--ucb_horizon_factor', type=int, default=10,
+    parser.add_argument('--ucb_horizon', type=int, default=50,
                        help='UCB horizon for best candidate selection')
     parser.add_argument('--num_to_sample', type=int, default=5,
                        help='Number of candidates to sample during exploration')
@@ -520,7 +520,7 @@ def main():
             "eval_frequency": args.eval_frequency,
             "log_frequency": args.log_frequency,
             "num_phases": args.num_phases,
-            "ucb_horizon_factor": args.ucb_horizon_factor,
+            "ucb_horizon": args.ucb_horizon,
             "num_to_sample": args.num_to_sample
         }
         
