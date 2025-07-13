@@ -351,7 +351,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using search algorithms')
     
     # Algorithm selection
-    parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
+    parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm'],
                        help='Algorithm to use for training')
     
@@ -374,9 +374,9 @@ def main():
                        help='How often to log results')
     
     # ExploreAlgorithm-specific parameters
-    parser.add_argument('--max_buffer_size', type=int, default=1000,
+    parser.add_argument('--max_buffer_size', type=int, default=5,
                        help='Maximum buffer size')
-    parser.add_argument('--ucb_exploration_factor', type=float, default=1.0,
+    parser.add_argument('--ucb_exploration_factor', type=float, default=0.3,
                        help='UCB exploration factor')
     parser.add_argument('--num_phases', type=int, default=5,
                        help='Number of training phases')
@@ -384,6 +384,8 @@ def main():
                        help='UCB horizon for best candidate selection')
     parser.add_argument('--num_to_sample', type=int, default=5,
                        help='Number of candidates to sample during exploration')
+    parser.add_argument('--evaluation_batch_size', type=int, default=20,
+                       help='Evaluation batch size')
     
     # MinibatchAlgorithm and BasicSearchAlgorithm-specific parameters
     parser.add_argument('--num_epochs', type=int, default=1,
@@ -464,7 +466,10 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=args.algorithm_name)
+        if args.algorithm_name == 'ExploreAlgorithm': #ExploreAlgorithm is in development, so we need to add a version number
+            logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=f"{args.algorithm_name}-v0.1")
+        else:
+            logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=f"{args.algorithm_name}")
         # logger = DefaultLogger
         # Create algorithm based on selection
         print(f"Creating {args.algorithm_name}...")
@@ -521,7 +526,8 @@ def main():
             "log_frequency": args.log_frequency,
             "num_phases": args.num_phases,
             "ucb_horizon": args.ucb_horizon,
-            "num_to_sample": args.num_to_sample
+            "num_to_sample": args.num_to_sample,
+            "evaluation_batch_size": args.evaluation_batch_size
         }
         
         # Add ExplorewithLLM-specific parameters
