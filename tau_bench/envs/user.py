@@ -75,10 +75,11 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
                 if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
                     # Exponential backoff: 1s, 2s, 4s
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})")
+                    print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {str(e)[:100]}")
                     time.sleep(wait_time)
                     continue
                 else:
+                    print(f"[USER_SIM] Non-retryable error: {e}")
                     raise e
         
         # This should not be reached, but just in case
@@ -175,14 +176,15 @@ User Response:
                 if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
                     # Exponential backoff: 1s, 2s, 4s
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})")
+                    print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {str(e)[:100]}")
                     time.sleep(wait_time)
                     continue
                 else:
+                    print(f"[USER_SIM] Non-retryable error: {e}")
                     raise e
         
         # This should not be reached, but just in case
-        raise Exception("All retry attempts failed")
+        raise Exception("All retry attempts failed: " + str(e))
 
     def reset(self, instruction: Optional[str] = None) -> str:
         self.messages = [
