@@ -186,6 +186,7 @@ class ToolCallingAgent(Agent):
         
         if env_reset_res is None:
             # If reset failed after all retries, return failure
+            print("Environment reset failed, return 0 reward")
             return 0, [], {}
             
         obs = env_reset_res.observation
