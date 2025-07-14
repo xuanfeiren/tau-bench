@@ -202,8 +202,7 @@ User Response:
                 if attempt < max_retries - 1 and is_retryable:
                     # Exponential backoff: 1s, 2s, 4s
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {e}")
-                    breakpoint()
+                    # print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {e}")
                     time.sleep(wait_time)
                     continue
                 else:
