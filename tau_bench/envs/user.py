@@ -173,10 +173,37 @@ User Response:
                 self.messages.append(cur_message.model_dump())
                 return self.parse_response(cur_message.content)
             except Exception as e:
-                if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
+                error_str = str(e).lower()
+                error_type = type(e).__name__.lower()
+            
+                # Check if it's a retryable error
+                retryable_errors = [
+                    'rate limit', 'timeout', 'temporary', 'service unavailable',
+                    'internal server error', 'bad gateway', 'service temporarily unavailable',
+                    'too many requests', 'quota', 'overloaded', 'resource has been exhausted',
+                    'resource_exhausted', 'ratelimiterror', 'quotaexceedederror',
+                    'connection error', 'network', 'json decode'
+                ]
+            
+                # Also check specific litellm exceptions
+                retryable_exception_types = [
+                    'ratelimiterror', 'timeouterror', 'apiconnectionerror', 
+                    'serviceunavailableerror', 'internalservererror', 'jsondecodeerror'
+                ]
+            
+                is_retryable = (
+                    any(err in error_str for err in retryable_errors) or
+                    any(exc_type in error_type for exc_type in retryable_exception_types) or
+                    'code": 429' in error_str or  # HTTP 429 Too Many Requests
+                    'code": 503' in error_str or  # HTTP 503 Service Unavailable
+                    'code": 502' in error_str or  # HTTP 502 Bad Gateway
+                    'code": 500' in error_str     # HTTP 500 Internal Server Error
+                )
+                if attempt < max_retries - 1 and is_retryable:
                     # Exponential backoff: 1s, 2s, 4s
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
                     print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {e}")
+                    breakpoint()
                     time.sleep(wait_time)
                     continue
                 else:
