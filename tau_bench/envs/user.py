@@ -2,12 +2,12 @@
 
 import abc
 import enum
-import time
 import random
 from litellm import completion
 
 from typing import Optional, List, Dict, Any, Union
 from tau_bench.model_utils.model.utils import trim_conversation_messages
+from tau_bench.retry_utils import auto_retry_with_exponential_backoff
 
 
 class BaseUserSimulationEnv(abc.ABC):
@@ -46,7 +46,8 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         self.total_cost = 0.0
         self.reset()
 
-    def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+    def _make_completion_call(self, messages: List[Dict[str, Any]]) -> str:
+        """Helper method to make a single completion call."""
         # Trim messages to prevent context window errors
         trimmed_messages = trim_conversation_messages(messages, model=self.model)
         
@@ -61,69 +62,28 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         if self.provider in ["hosted_vllm", "vllm"]:
             completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
         
-        # Retry logic with exponential backoff for service unavailability
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                res = completion(**completion_kwargs)
-                cur_message = res.choices[0].message
-                cost = res._hidden_params.get("response_cost")
-                self.total_cost = cost if cost is not None else 0.0
-                self.messages.append(cur_message.model_dump())
-                return cur_message.content
-            except Exception as e:
-                error_str = str(e).lower()
-                error_type = type(e).__name__.lower()
-                
-                # Check if it's a retryable error
-                retryable_errors = [
-                    'rate limit', 'timeout', 'temporary', 'service unavailable',
-                    'internal server error', 'bad gateway', 'service temporarily unavailable',
-                    'too many requests', 'quota', 'overloaded', 'resource has been exhausted',
-                    'resource_exhausted', 'ratelimiterror', 'quotaexceedederror',
-                    'connection error', 'network', 'json decode'
-                ]
-                
-                # Also check specific litellm exceptions
-                retryable_exception_types = [
-                    'ratelimiterror', 'timeouterror', 'apiconnectionerror', 
-                    'serviceunavailableerror', 'internalservererror', 'jsondecodeerror'
-                ]
-                
-                is_retryable = (
-                    any(err in error_str for err in retryable_errors) or
-                    any(exc_type in error_type for exc_type in retryable_exception_types) or
-                    'code": 429' in error_str or  # HTTP 429 Too Many Requests
-                    'code": 503' in error_str or  # HTTP 503 Service Unavailable
-                    'code": 502' in error_str or  # HTTP 502 Bad Gateway
-                    'code": 500' in error_str     # HTTP 500 Internal Server Error
-                )
-                
-                if attempt < max_retries - 1 and is_retryable:
-                    # Special handling for rate limit errors - use longer delays
-                    is_rate_limit = (
-                        'rate limit' in error_str or 'ratelimiterror' in error_type or
-                        'quota' in error_str or 'resource has been exhausted' in error_str or
-                        'code": 429' in error_str
-                    )
-                    
-                    if is_rate_limit:
-                        # Longer delays for rate limits: 2, 8, 18, 32, 50 seconds
-                        wait_time = 2 * (attempt + 1) ** 2 + attempt
-                    else:
-                        # Standard exponential backoff for other errors: 1s, 2s, 4s
-                        wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    
-                    error_type_desc = "Rate limit" if is_rate_limit else "Service error"
-                    # print(f"[USER_SIM] {error_type_desc}, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})", flush=True)
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    print(f"[USER_SIM] Non-retryable error: {e}", flush=True)
-                    raise e
+        res = completion(**completion_kwargs)
+        cur_message = res.choices[0].message
+        cost = res._hidden_params.get("response_cost")
+        self.total_cost = cost if cost is not None else 0.0
+        self.messages.append(cur_message.model_dump())
+        return cur_message.content
+
+    def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+        """Generate next message using auto retry with exponential backoff."""
+        def completion_call():
+            return self._make_completion_call(messages)
         
-        # This should not be reached, but just in case
-        raise Exception("All retry attempts failed")
+        result = auto_retry_with_exponential_backoff(
+            completion_call,
+            max_retries=10,
+            operation_name="LLM User Simulation"
+        )
+        
+        if result is None:
+            raise Exception("Failed to generate message after all retry attempts")
+        
+        return result
 
     def build_system_prompt(self, instruction: Optional[str]) -> str:
         instruction_display = (
@@ -187,7 +147,8 @@ Thought:
 User Response:
 <the user response (this will be parsed and sent to the agent)>"""
 
-    def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+    def _make_completion_call(self, messages: List[Dict[str, Any]]) -> str:
+        """Helper method to make a single completion call for React user."""
         # Trim messages to prevent context window errors
         trimmed_messages = trim_conversation_messages(messages, model=self.model)
         
@@ -202,79 +163,28 @@ User Response:
         if self.provider in ["hosted_vllm", "vllm"]:
             completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
         
-        # Retry logic with exponential backoff for service unavailability
-        max_retries = 10
-        for attempt in range(max_retries):
-            try:
-                res = completion(**completion_kwargs)
-                cur_message = res.choices[0].message
-                cost = res._hidden_params.get("response_cost")
-                self.total_cost = cost if cost is not None else 0.0
-                self.messages.append(cur_message.model_dump())
-                return self.parse_response(cur_message.content)
-            except Exception as e:
-                error_str = str(e).lower()
-                error_type = type(e).__name__.lower()
-            
-                # Check if it's a retryable error
-                retryable_errors = [
-                    'rate limit', 'timeout', 'temporary', 'service unavailable',
-                    'internal server error', 'bad gateway', 'service temporarily unavailable',
-                    'too many requests', 'quota', 'overloaded', 'resource has been exhausted',
-                    'resource_exhausted', 'ratelimiterror', 'quotaexceedederror',
-                    'connection error', 'network', 'json decode'
-                ]
-            
-                # Also check specific litellm exceptions
-                retryable_exception_types = [
-                    'ratelimiterror', 'timeouterror', 'apiconnectionerror', 
-                    'serviceunavailableerror', 'internalservererror', 'jsondecodeerror'
-                ]
-            
-                is_retryable = (
-                    any(err in error_str for err in retryable_errors) or
-                    any(exc_type in error_type for exc_type in retryable_exception_types) or
-                    'code": 429' in error_str or  # HTTP 429 Too Many Requests
-                    'code": 503' in error_str or  # HTTP 503 Service Unavailable
-                    'code": 502' in error_str or  # HTTP 502 Bad Gateway
-                    'code": 500' in error_str     # HTTP 500 Internal Server Error
-                )
-                
-                if attempt < max_retries - 1 and is_retryable:
-                    # Special handling for rate limit errors - use longer delays
-                    is_rate_limit = (
-                        'rate limit' in error_str or 'ratelimiterror' in error_type or
-                        'quota' in error_str or 'resource has been exhausted' in error_str or
-                        'code": 429' in error_str
-                    )
-                    
-                    if is_rate_limit:
-                        # Longer delays for rate limits: 2, 8, 18, 32, 50 seconds
-                        wait_time = 2 * (attempt + 1) ** 2 + attempt
-                    else:
-                        # Standard exponential backoff for other errors: 1s, 2s, 4s
-                        wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    
-                    error_type_desc = "Rate limit" if is_rate_limit else "Service error"
-                    # print(f"[USER_SIM] {error_type_desc}, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})", flush=True)
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    print(f"[USER_SIM] Non-retryable error: {e}", flush=True)
-                    raise e
-        
-        # This should not be reached, but just in case
-        raise Exception("All retry attempts failed: " + str(e))
+        res = completion(**completion_kwargs)
+        cur_message = res.choices[0].message
+        cost = res._hidden_params.get("response_cost")
+        self.total_cost = cost if cost is not None else 0.0
+        self.messages.append(cur_message.model_dump())
+        return self.parse_response(cur_message.content)
 
-    def reset(self, instruction: Optional[str] = None) -> str:
-        self.messages = [
-            {
-                "role": "system",
-                "content": self.build_system_prompt(instruction=instruction),
-            },
-            {"role": "user", "content": "Hi! How can I help you today?"},
-        ]
-        return self.generate_next_message(self.messages)
+    def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+        """Generate next message using auto retry with exponential backoff."""
+        def completion_call():
+            return self._make_completion_call(messages)
+        
+        result = auto_retry_with_exponential_backoff(
+            completion_call,
+            max_retries=10,
+            operation_name="React User Simulation"
+        )
+        
+        if result is None:
+            raise Exception("Failed to generate message after all retry attempts: " + str(Exception))
+        
+        return result
 
     def parse_response(self, response: str) -> str:
         if "###STOP###" in response:
@@ -287,6 +197,16 @@ User Response:
             return user_response.strip()
         else:
             raise ValueError(f"Invalid response format: {response}")
+
+    def reset(self, instruction: Optional[str] = None) -> str:
+        self.messages = [
+            {
+                "role": "system",
+                "content": self.build_system_prompt(instruction=instruction),
+            },
+            {"role": "user", "content": "Hi! How can I help you today?"},
+        ]
+        return self.generate_next_message(self.messages)
 
     def step(self, content: str) -> str:
         self.messages.append({"role": "user", "content": content})
@@ -303,35 +223,62 @@ class VerifyUserSimulationEnv(LLMUserSimulationEnv):
         self.max_attempts = max_attempts
         self.reset()
 
+    def _make_single_completion_attempt(self, messages: List[Dict[str, Any]]) -> tuple:
+        """Make a single completion attempt and return (message, success)."""
+        # Trim messages to prevent context window errors
+        trimmed_messages = trim_conversation_messages(messages, model=self.model)
+        
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": self.model,
+            "custom_llm_provider": self.provider,
+            "messages": trimmed_messages,
+        }
+        
+        # Add api_base only for local/hosted providers
+        if self.provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
+        cur_message = res.choices[0].message
+        cost = res._hidden_params.get("response_cost")
+        self.total_cost = cost if cost is not None else 0.0
+        
+        # Check if this message is verified
+        is_verified = verify(self.model, self.provider, cur_message.content, messages)
+        
+        if is_verified:
+            self.messages.append(cur_message.model_dump())
+            return cur_message.content, True
+        else:
+            return cur_message.content, False
+
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
+        """Generate next message with verification and retry logic."""
         attempts = 0
-        cur_message = None
+        last_message = None
+        
         while attempts < self.max_attempts:
-            # Trim messages to prevent context window errors
-            trimmed_messages = trim_conversation_messages(messages, model=self.model)
+            def completion_call():
+                return self._make_single_completion_attempt(messages)
             
-            # Prepare completion arguments
-            completion_kwargs = {
-                "model": self.model,
-                "custom_llm_provider": self.provider,
-                "messages": trimmed_messages,
-            }
+            result = auto_retry_with_exponential_backoff(
+                completion_call,
+                max_retries=3,
+                operation_name=f"Verify User Simulation (attempt {attempts + 1})"
+            )
             
-            # Add api_base only for local/hosted providers
-            if self.provider in ["hosted_vllm", "vllm"]:
-                completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+            if result is not None:
+                message_content, is_verified = result
+                last_message = message_content
+                
+                if is_verified:
+                    return message_content
             
-            res = completion(**completion_kwargs)
-            cur_message = res.choices[0].message
-            cost = res._hidden_params.get("response_cost")
-            self.total_cost = cost if cost is not None else 0.0
-            # Skip cost tracking for vLLM/local models where cost is None
-            if verify(self.model, self.provider, cur_message, messages):
-                self.messages.append(cur_message.model_dump())
-                return cur_message.content
             attempts += 1
-        assert cur_message is not None
-        return cur_message.content
+        
+        # If we've exhausted all verification attempts, return the last message
+        return last_message if last_message is not None else "Sorry, I couldn't generate a proper response."
 
     def reset(self, instruction: Optional[str] = None) -> str:
         self.messages = [
@@ -381,19 +328,33 @@ Your answer will be parsed, so do not include any other text than the classifica
 -----
 
 Classification:"""
-    # Prepare completion arguments
-    completion_kwargs = {
-        "model": model,
-        "custom_llm_provider": provider,
-        "messages": [{"role": "user", "content": prompt}],
-    }
     
-    # Add api_base only for local/hosted providers
-    if provider in ["hosted_vllm", "vllm"]:
-        completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+    def completion_call():
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": model,
+            "custom_llm_provider": provider,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        
+        # Add api_base only for local/hosted providers
+        if provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
+        return "true" in res.choices[0].message.content.lower()
     
-    res = completion(**completion_kwargs)
-    return "true" in res.choices[0].message.content.lower()
+    result = auto_retry_with_exponential_backoff(
+        completion_call,
+        max_retries=3,
+        operation_name="Verify user response"
+    )
+    
+    if result is None:
+        # Default to False if verification fails
+        return False
+    
+    return result
 
 
 def reflect(
@@ -422,20 +383,35 @@ Reflection:
 
 Response:
 <the response (this will be parsed and sent to the agent)>"""
-    # Prepare completion arguments
-    completion_kwargs = {
-        "model": model,
-        "custom_llm_provider": provider,
-        "messages": [{"role": "user", "content": prompt}],
-    }
     
-    # Add api_base only for local/hosted providers
-    if provider in ["hosted_vllm", "vllm"]:
-        completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+    def completion_call():
+        # Prepare completion arguments
+        completion_kwargs = {
+            "model": model,
+            "custom_llm_provider": provider,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        
+        # Add api_base only for local/hosted providers
+        if provider in ["hosted_vllm", "vllm"]:
+            completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
+        
+        res = completion(**completion_kwargs)
+        response_content = res.choices[0].message.content
+        _, response = response_content.split("Response:")
+        return response.strip()
     
-    res = completion(**completion_kwargs)
-    _, response = res.choices[0].message.content.split("Response:")
-    return response.strip()
+    result = auto_retry_with_exponential_backoff(
+        completion_call,
+        max_retries=3,
+        operation_name="Reflect on user response"
+    )
+    
+    if result is None:
+        # Return original response if reflection fails
+        return response
+    
+    return result
 
 
 class ReflectionUserSimulationEnv(LLMUserSimulationEnv):
