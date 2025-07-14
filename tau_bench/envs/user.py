@@ -72,14 +72,54 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
                 self.messages.append(cur_message.model_dump())
                 return cur_message.content
             except Exception as e:
-                if attempt < max_retries - 1 and ("503" in str(e) or "unavailable" in str(e).lower() or "overloaded" in str(e).lower()):
-                    # Exponential backoff: 1s, 2s, 4s
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {str(e)[:100]}")
+                error_str = str(e).lower()
+                error_type = type(e).__name__.lower()
+                
+                # Check if it's a retryable error
+                retryable_errors = [
+                    'rate limit', 'timeout', 'temporary', 'service unavailable',
+                    'internal server error', 'bad gateway', 'service temporarily unavailable',
+                    'too many requests', 'quota', 'overloaded', 'resource has been exhausted',
+                    'resource_exhausted', 'ratelimiterror', 'quotaexceedederror',
+                    'connection error', 'network', 'json decode'
+                ]
+                
+                # Also check specific litellm exceptions
+                retryable_exception_types = [
+                    'ratelimiterror', 'timeouterror', 'apiconnectionerror', 
+                    'serviceunavailableerror', 'internalservererror', 'jsondecodeerror'
+                ]
+                
+                is_retryable = (
+                    any(err in error_str for err in retryable_errors) or
+                    any(exc_type in error_type for exc_type in retryable_exception_types) or
+                    'code": 429' in error_str or  # HTTP 429 Too Many Requests
+                    'code": 503' in error_str or  # HTTP 503 Service Unavailable
+                    'code": 502' in error_str or  # HTTP 502 Bad Gateway
+                    'code": 500' in error_str     # HTTP 500 Internal Server Error
+                )
+                
+                if attempt < max_retries - 1 and is_retryable:
+                    # Special handling for rate limit errors - use longer delays
+                    is_rate_limit = (
+                        'rate limit' in error_str or 'ratelimiterror' in error_type or
+                        'quota' in error_str or 'resource has been exhausted' in error_str or
+                        'code": 429' in error_str
+                    )
+                    
+                    if is_rate_limit:
+                        # Longer delays for rate limits: 2, 8, 18, 32, 50 seconds
+                        wait_time = 2 * (attempt + 1) ** 2 + attempt
+                    else:
+                        # Standard exponential backoff for other errors: 1s, 2s, 4s
+                        wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    
+                    error_type_desc = "Rate limit" if is_rate_limit else "Service error"
+                    # print(f"[USER_SIM] {error_type_desc}, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})", flush=True)
                     time.sleep(wait_time)
                     continue
                 else:
-                    print(f"[USER_SIM] Non-retryable error: {e}")
+                    print(f"[USER_SIM] Non-retryable error: {e}", flush=True)
                     raise e
         
         # This should not be reached, but just in case
@@ -199,14 +239,28 @@ User Response:
                     'code": 502' in error_str or  # HTTP 502 Bad Gateway
                     'code": 500' in error_str     # HTTP 500 Internal Server Error
                 )
+                
                 if attempt < max_retries - 1 and is_retryable:
-                    # Exponential backoff: 1s, 2s, 4s
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)
-                    # print(f"[USER_SIM] Service unavailable, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries}) - Error: {e}")
+                    # Special handling for rate limit errors - use longer delays
+                    is_rate_limit = (
+                        'rate limit' in error_str or 'ratelimiterror' in error_type or
+                        'quota' in error_str or 'resource has been exhausted' in error_str or
+                        'code": 429' in error_str
+                    )
+                    
+                    if is_rate_limit:
+                        # Longer delays for rate limits: 2, 8, 18, 32, 50 seconds
+                        wait_time = 2 * (attempt + 1) ** 2 + attempt
+                    else:
+                        # Standard exponential backoff for other errors: 1s, 2s, 4s
+                        wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    
+                    error_type_desc = "Rate limit" if is_rate_limit else "Service error"
+                    # print(f"[USER_SIM] {error_type_desc}, retrying in {wait_time:.1f}s... (attempt {attempt + 1}/{max_retries})", flush=True)
                     time.sleep(wait_time)
                     continue
                 else:
-                    print(f"[USER_SIM] Non-retryable error: {e}")
+                    print(f"[USER_SIM] Non-retryable error: {e}", flush=True)
                     raise e
         
         # This should not be reached, but just in case
