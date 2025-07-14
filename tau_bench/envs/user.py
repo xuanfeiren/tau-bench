@@ -163,7 +163,7 @@ User Response:
             completion_kwargs["api_base"] = "http://127.0.0.1:8000/v1"
         
         # Retry logic with exponential backoff for service unavailability
-        max_retries = 3
+        max_retries = 10
         for attempt in range(max_retries):
             try:
                 res = completion(**completion_kwargs)
