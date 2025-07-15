@@ -390,7 +390,7 @@ def main():
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
         if args.algorithm_name == 'ExploreAlgorithm': #ExploreAlgorithm is in development, so we need to add a version number
-            logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=f"{args.algorithm_name}-v0.1")
+            logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=f"{args.algorithm_name}-v0.12")
         else:
             logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=f"{args.algorithm_name}")
         # logger = DefaultLogger
