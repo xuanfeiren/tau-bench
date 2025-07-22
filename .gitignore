@@ -7,3 +7,9 @@ results/**/temp_*
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# Trace repo
+Trace/
+
+# all logs
+logs/
