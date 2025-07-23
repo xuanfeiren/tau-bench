@@ -108,8 +108,8 @@ class ToolCallingAgent(Agent):
         
         if env_reset_res is None:
             # If reset failed after all retries, return failure
-            print("Environment reset failed, return 0 reward")
-            return 0, [], {}
+            print("Environment reset failed, return None reward")
+            return None, [], {}
             
         obs = env_reset_res.observation
         info = env_reset_res.info.model_dump()
@@ -156,8 +156,8 @@ class ToolCallingAgent(Agent):
             )
             
             if step_result is None:
-                print(f"Step {step}: Return 0 reward due to interaction failure")
-                return 0, [], {}
+                print(f"Step {step}: Return None reward due to interaction failure")
+                return None, [], {}
             
             # Extract results
             next_message, action, env_response = step_result
