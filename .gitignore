@@ -13,3 +13,5 @@ Trace/
 
 # all logs
 logs/
+
+.vscode/
