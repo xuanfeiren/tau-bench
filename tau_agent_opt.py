@@ -23,7 +23,7 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
-from opto.trainer.algorithms.basic_algorithms import MinibatchAlgorithm, BasicSearchAlgorithm
+from opto.trainer.algorithms.baselines import MinibatchAlgorithm, BasicSearchAlgorithm
 from opto.trainer.guide import AutoGuide
 
 import litellm 
@@ -287,7 +287,7 @@ def main():
                        help='Number of test samples')
     
     # Training parameters
-    parser.add_argument('--train_batch_size', type=int, default=1,
+    parser.add_argument('--train_batch_size', type=int, default=2,
                        help='Training batch size')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
@@ -311,7 +311,7 @@ def main():
                        help='Evaluation batch size')
     
     # MinibatchAlgorithm and BasicSearchAlgorithm-specific parameters
-    parser.add_argument('--num_epochs', type=int, default=1,
+    parser.add_argument('--num_epochs', type=int, default=20,
                        help='Number of training epochs')
     parser.add_argument('--num_proposals', type=int, default=3,
                        help='Number of proposals for BasicSearchAlgorithm')
