@@ -23,7 +23,7 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
-from opto.trainer.algorithms.baselines import MinibatchAlgorithm, BasicSearchAlgorithm
+from opto.trainer.algorithms.baselines import  MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
 
 import litellm 
@@ -275,7 +275,8 @@ def main():
     
     # Algorithm selection
     parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
-                       choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm'],
+                       choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
+                               'MinibatchwithValidation', 'IslandSearchAlgorithm'],
                        help='Algorithm to use for training')
     
     # Dataset parameters
@@ -323,6 +324,12 @@ def main():
                        help='LLM model to use for ExplorewithLLM')
     parser.add_argument('--num_samples_in_prompt', type=int, default=5,
                        help='Number of samples to include in LLM prompt')
+    
+    # IslandSearchAlgorithm-specific parameters
+    parser.add_argument('--num_islands', type=int, default=4,
+                       help='Number of islands for IslandSearchAlgorithm')
+    parser.add_argument('--discard_frequency', type=int, default=2,
+                       help='Frequency of discarding islands with low scores')
     
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
@@ -428,6 +435,24 @@ def main():
                 logger=logger,
                 num_threads=args.num_threads
             )
+        elif args.algorithm_name == 'MinibatchwithValidation':
+            algorithm = MinibatchwithValidation(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
+        elif args.algorithm_name == 'IslandSearchAlgorithm':
+            algorithm = IslandSearchAlgorithm(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_islands=args.num_islands,
+                num_threads=args.num_threads,
+                llm_model=args.llm_model,
+                num_samples_in_prompt=args.num_samples_in_prompt,
+                num_LLM_samples=args.num_LLM_samples
+            )
         else:
             raise ValueError(f"Unknown algorithm: {args.algorithm_name}")
         
@@ -448,11 +473,13 @@ def main():
             "num_phases": args.num_phases,
             "ucb_horizon": args.ucb_horizon,
             "num_to_sample": args.num_to_sample,
-            "evaluation_batch_size": args.evaluation_batch_size
+            "evaluation_batch_size": args.evaluation_batch_size,
+            "discard_frequency": args.discard_frequency,  # For IslandSearchAlgorithm
+            "num_eval_samples": 5  # For MinibatchwithValidation and others
         }
         
-        # Add ExplorewithLLM-specific parameters
-        if args.algorithm_name == 'ExplorewithLLM':
+        # Add ExplorewithLLM and IslandSearchAlgorithm-specific parameters
+        if args.algorithm_name in ['ExplorewithLLM', 'IslandSearchAlgorithm']:
             train_params["num_LLM_samples"] = args.num_LLM_samples
         
         # Start training
@@ -460,6 +487,21 @@ def main():
         print(f"Training batch size: {args.train_batch_size}")
         # print(f"Number of phases: {args.num_phases}")
         print(f"Number of threads: {args.num_threads}")
+        
+        # Print algorithm-specific parameters
+        if args.algorithm_name == 'IslandSearchAlgorithm':
+            print(f"Number of islands: {args.num_islands}")
+            print(f"LLM model: {args.llm_model}")
+            print(f"Number of LLM samples: {args.num_LLM_samples}")
+            print(f"Discard frequency: {args.discard_frequency}")
+        elif args.algorithm_name in ['ExplorewithLLM']:
+            print(f"LLM model: {args.llm_model}")
+            print(f"Number of LLM samples: {args.num_LLM_samples}")
+        elif args.algorithm_name in ['BasicSearchAlgorithm']:
+            print(f"Number of proposals: {args.num_proposals}")
+        elif args.algorithm_name in ['MinibatchwithValidation']:
+            print(f"Number of epochs: {args.num_epochs}")
+            print(f"Number of proposals: {args.num_proposals}")
         
         import time
         start_time = time.time()
