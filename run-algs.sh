@@ -30,3 +30,10 @@ python tau_agent_opt.py --algorithm_name "IslandSearchAlgorithm"  --num_islands 
 
 python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 3 --run_name "MinibatchwithValidation-debug" --num_train_samples 1 --num_validate_samples 1 --num_test_samples 1
 
+for i in {1..3}; do
+    python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithValidation"
+    python tau_agent_opt.py --algorithm_name "IslandSearchAlgorithm"  --num_islands 4 --num_LLM_samples 2 --num_samples_in_prompt 2 --num_threads 20  --run_name "IslandSearchAlgorithm" --num_epochs 5 --llm_model "gemini/gemini-2.0-flash"
+    python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency 2 --log_frequency 1 --num_proposals 2 --num_validate_samples 50 --num_epochs 20 --run_name "BasicSearchAlgorithm"
+done
+
+python tau_agent_opt.py --algorithm_name "IslandSearchAlgorithm"  --num_islands 4 --num_LLM_samples 2 --num_samples_in_prompt 2 --num_threads 20  --run_name "IslandSearchAlgorithm" --num_epochs 5 --llm_model "vertex_ai/gemini-2.0-flash" --model "vertex_ai/gemini-2.0-flash" --user_model "vertex_ai/gemini-2.0-flash"
