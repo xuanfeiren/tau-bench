@@ -32,7 +32,9 @@ litellm.suppress_debug_info = True
 import sys
 import os
 from datetime import datetime
-os.environ["TRACE_LITELLM_MODEL"] = "gemini/gemini-2.0-flash"
+# provider = "vertex_ai"
+provider = "gemini"
+os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
 
 
 OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
@@ -343,8 +345,8 @@ def main():
     try:
         # Create configuration
         config = RunConfig(
-            model_provider="gemini",
-            user_model_provider="gemini",
+            model_provider=provider,
+            user_model_provider=provider,
             model=args.model,
             user_model=args.user_model,
             num_trials=1,
