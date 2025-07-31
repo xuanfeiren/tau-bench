@@ -22,7 +22,7 @@ def auto_retry_with_exponential_backoff(
         operation_name: Name of the operation for logging
     
     Returns:
-        Result of the function call, or None if all retries failed
+        Result of the function call, None if all retries failed, or -1 for BadRequest 400 errors
         
     Raises:
         The last exception encountered if it's non-retryable
@@ -81,9 +81,19 @@ def auto_retry_with_exponential_backoff(
                 # print(f"{operation_name}: {error_type_desc} - Retry {retry_attempt + 1}/{max_retries} after {delay:.1f}s. Error: {e}")
                 time.sleep(delay)
             else:
-                # Non-retryable error
-                print(f"{operation_name}: Non-retryable error: {e}")
-                return None
+                # Non-retryable error - check if it's a BadRequest 400 error
+                is_bad_request = (
+                    'badrequesterror' in error_type or
+                    'code": 400' in error_str or
+                    'invalid_argument' in error_str
+                )
+                
+                if is_bad_request:
+                    print(f"{operation_name}: BadRequest error (400): {e}")
+                    return -1
+                else:
+                    print(f"{operation_name}: Non-retryable error: {e}")
+                    return None
     
     # This should never be reached, but just in case
     return None 
