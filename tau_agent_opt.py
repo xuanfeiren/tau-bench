@@ -23,7 +23,7 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
-from opto.trainer.algorithms.baselines import  MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, MinibatchAlgorithm
+from opto.trainer.algorithms.baselines import  MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, MinibatchAlgorithm, DetectCorrelation
 from opto.trainer.guide import AutoGuide
 
 import litellm 
@@ -276,7 +276,7 @@ def main():
     # Algorithm selection
     parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
-                               'MinibatchwithValidation', 'IslandSearchAlgorithm'],
+                               'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation'],
                        help='Algorithm to use for training')
     
     # Dataset parameters
@@ -453,6 +453,13 @@ def main():
                 num_samples_in_prompt=args.num_samples_in_prompt,
                 num_LLM_samples=args.num_LLM_samples
             )
+        elif args.algorithm_name == 'DetectCorrelation':
+            algorithm = DetectCorrelation(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
         else:
             raise ValueError(f"Unknown algorithm: {args.algorithm_name}")
         
@@ -502,6 +509,9 @@ def main():
         elif args.algorithm_name in ['MinibatchwithValidation']:
             print(f"Number of epochs: {args.num_epochs}")
             print(f"Number of proposals: {args.num_proposals}")
+        elif args.algorithm_name == 'DetectCorrelation':
+            print(f"Number of epochs: {args.num_epochs}")
+            print(f"Training batch size: {args.train_batch_size}")
         
         import time
         start_time = time.time()
