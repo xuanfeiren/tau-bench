@@ -26,6 +26,9 @@ from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
 from opto.trainer.algorithms.baselines import  MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, MinibatchAlgorithm, DetectCorrelation
 from opto.trainer.guide import AutoGuide
 
+# Import the agent from separate module to avoid pickle issues
+from agents.tool_calling_agent import ToolCallingAgent, message_to_action
+
 import litellm 
 litellm.drop_params = True
 litellm.suppress_debug_info = True
@@ -75,148 +78,6 @@ Your response must contain ONLY these two sections:
 2. "suggestion": Provide both the complete optimized tool information AND the improved additional instructions
 
 Do not include any other text, explanations, or keywords like TERMINATE."""
-
-@trace.model
-class ToolCallingAgent(Agent):
-    def __init__(
-        self,
-        tools_info: List[Dict[str, Any]],
-        wiki: str,
-        model: str,
-        provider: str,
-        temperature: float = 0.0,
-    ):
-        super().__init__()
-        self.tools_info = trace.node(tools_info, trainable=True)
-        self.wiki = wiki
-        self.additional_instructions = trace.node("Here are the additional instructions to help the agent solve the task: ", trainable=True)
-        self.model = model
-        self.provider = provider
-        self.temperature = temperature
-
-    @trace.bundle()
-    def solve(self, tools_info, additional_instructions, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
-        """Agent solves the task with the given tools_info."""
-        total_cost = 0.0
-        
-        # Wrap env.reset with retry logic
-        def reset_env():
-            return env.reset(task_index=task_index)
-        
-        env_reset_res = auto_retry_with_exponential_backoff(
-            reset_env,
-            operation_name="Environment reset"
-        )
-        
-        if env_reset_res is None:
-            # If reset failed after all retries, return failure
-            print("Environment reset failed, return None reward")
-            return None, [], {}
-            
-        obs = env_reset_res.observation
-        info = env_reset_res.info.model_dump()
-        reward = 0.0
-        messages: List[Dict[str, Any]] = [
-            {"role": "system", "content": self.wiki},
-            {"role": "system", "content": additional_instructions},
-            {"role": "user", "content": obs},
-        ]
-        
-        for step in range(max_num_steps):
-            completion_kwargs = {
-                "messages": messages,
-                "model": self.model,
-                "custom_llm_provider": self.provider,
-                "tools": tools_info,
-                "temperature": self.temperature,
-            }
-            
-            # Define the complete interaction as a single function to retry
-            def step_interaction():
-                # Step 1: Get completion from API
-                res = completion(**completion_kwargs)
-                
-                # Step 2: Process the response
-                next_message = res.choices[0].message.model_dump()
-                cost = res._hidden_params.get("response_cost")
-                if cost is not None:
-                    nonlocal total_cost
-                    total_cost += cost
-                
-                # Step 3: Convert message to action
-                action = message_to_action(next_message)
-                
-                # Step 4: Execute action in environment
-                env_response = env.step(action)
-                
-                return next_message, action, env_response
-            
-            # Use auto retry function
-            step_result = auto_retry_with_exponential_backoff(
-                step_interaction, 
-                operation_name=f"Step {step}"
-            )
-            
-            if step_result is None:
-                print(f"Step {step}: Return None reward due to interaction failure")
-                return None, [], {}
-            
-            # Extract results
-            next_message, action, env_response = step_result
-            
-            # Process results since step was successful
-            reward = env_response.reward
-            info = {**info, **env_response.info.model_dump()}
-            
-            if action.name != RESPOND_ACTION_NAME:
-                next_message["tool_calls"] = next_message["tool_calls"][:1]
-                messages.extend([
-                    next_message,
-                    {
-                        "role": "tool",
-                        "tool_call_id": next_message["tool_calls"][0]["id"],
-                        "name": next_message["tool_calls"][0]["function"]["name"],
-                        "content": env_response.observation,
-                    },
-                ])
-            else:
-                messages.extend([
-                    next_message,
-                    {"role": "user", "content": env_response.observation},
-                ])
-                
-            if env_response.done:
-                break
-                
-        result = SolveResult(reward=reward, info=info, messages=messages, total_cost=total_cost)
-        
-        if result.reward == 1:
-            return result.reward, "Correct", "Correct"
-        else:
-            return result.reward, result.messages, result.info
-        
-    def forward(self, task_input):
-        """Forward pass of the agent for trainer compatibility."""
-        env = getattr(self, '_env', None)
-        if env is None:
-            raise ValueError("Environment not set. Call set_env() before forward pass.")
-        
-        return self.solve(self.tools_info, self.additional_instructions, env, task_input)
-    
-    def set_env(self, env):
-        """Set the environment for this agent."""
-        self._env = env
-
-def message_to_action(message: Dict[str, Any]) -> Action:
-    """Convert message to action."""
-    if "tool_calls" in message and message["tool_calls"] is not None and len(message["tool_calls"]) > 0 and message["tool_calls"][0]["function"] is not None:
-        tool_call = message["tool_calls"][0]
-        return Action(
-            name=tool_call["function"]["name"],
-            kwargs=json.loads(tool_call["function"]["arguments"]),
-        )
-    else:
-        return Action(name=RESPOND_ACTION_NAME, kwargs={"content": message["content"]})
 
 class TeacherGuide(AutoGuide):
     """Guide that extract reward and feedback from the agent's output."""
@@ -276,7 +137,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using search algorithms')
     
     # Algorithm selection
-    parser.add_argument('--algorithm_name', type=str, default='ExploreAlgorithm',
+    parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
                                'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation'],
                        help='Algorithm to use for training')
@@ -312,6 +173,8 @@ def main():
                        help='Number of candidates to sample during exploration')
     parser.add_argument('--evaluation_batch_size', type=int, default=20,
                        help='Evaluation batch size')
+    parser.add_argument('--num_eval_samples', type=int, default=5,
+                       help='Number of samples to evaluate for each input')
     
     # MinibatchAlgorithm and BasicSearchAlgorithm-specific parameters
     parser.add_argument('--num_epochs', type=int, default=20,
@@ -484,7 +347,7 @@ def main():
             "num_to_sample": args.num_to_sample,
             "evaluation_batch_size": args.evaluation_batch_size,
             "discard_frequency": args.discard_frequency,  # For IslandSearchAlgorithm
-            "num_eval_samples": 5  # For MinibatchwithValidation and others
+            "num_eval_samples": args.num_eval_samples  # For MinibatchwithValidation and others
         }
         
         # Add ExplorewithLLM and IslandSearchAlgorithm-specific parameters

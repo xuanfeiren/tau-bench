@@ -38,4 +38,6 @@ done
 
 python tau_agent_opt.py --algorithm_name "IslandSearchAlgorithm"  --num_islands 2 --num_LLM_samples 4 --num_samples_in_prompt 2 --num_threads 20  --run_name "IslandSearchAlgorithm-debug" --num_epochs 5 --num_train_samples 1 --num_validate_samples 1 --num_test_samples 1
 
-python tau_agent_opt.py --algorithm_name "DetectCorrelation"  --num_threads 20  --run_name "DetectCorrelation" --num_epochs 2000 
+python tau_agent_opt.py --algorithm_name "DetectCorrelation"  --num_threads 20  --run_name "DetectCorrelation" --num_epochs 2000
+ 
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm"  --eval_frequency 1 --log_frequency 1  --num_epochs 3 --run_name "Minibatch-with-save-debug" --num_eval_samples 1
