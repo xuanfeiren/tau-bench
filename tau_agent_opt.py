@@ -163,7 +163,7 @@ def main():
     # ExploreAlgorithm-specific parameters
     parser.add_argument('--max_buffer_size', type=int, default=5,
                        help='Maximum buffer size')
-    parser.add_argument('--ucb_exploration_factor', type=float, default=0.3,
+    parser.add_argument('--ucb_exploration_factor', type=float, default=0.1,
                        help='UCB exploration factor')
     parser.add_argument('--num_phases', type=int, default=5,
                        help='Number of training phases')
