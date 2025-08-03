@@ -10,7 +10,7 @@ import numpy as np
 from scipy import stats
 import seaborn as sns
 
-def load_data(filename='correlation_detection.csv'):
+def load_data(filename='data_to_plot/correlation_detection.csv'):
     """Load the correlation detection data."""
     try:
         df = pd.read_csv(filename)

@@ -38,9 +38,14 @@ done
 
 python tau_agent_opt.py --algorithm_name "IslandSearchAlgorithm"  --num_islands 2 --num_LLM_samples 4 --num_samples_in_prompt 2 --num_threads 20  --run_name "IslandSearchAlgorithm-debug" --num_epochs 5 --num_train_samples 1 --num_validate_samples 1 --num_test_samples 1
 
-python tau_agent_opt.py --algorithm_name "DetectCorrelation"  --num_threads 20  --run_name "DetectCorrelation" --num_epochs 2000 
 python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm"  --eval_frequency 1 --log_frequency 1  --num_epochs 3 --run_name "Minibatch-with-save-debug" --num_eval_samples 1
 
 for i in {1..3}; do
-    python tau_agent_opt.py --algorithm_name "ExploreAlgorithm" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3 --ucb_horizon 5 --num_phases 10 --train_batch_size 2 --num_to_sample 2 --run_name "ExploreAlgorithm_v1.1"
+    python tau_agent_opt.py --algorithm_name "ExploreAlgorithm" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3 --ucb_horizon 5 --num_phases 10 --train_batch_size 2 --num_to_sample 2 --ucb_exploration_factor 0.1 --run_name "ExploreAlgorithm_v1.2"
 done
+# 8.1
+python tau_agent_opt.py --algorithm_name "DetectCorrelation"  --num_threads 20  --run_name "DetectCorrelation" --num_epochs 200 
+python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithUCBValidation"
+
+## Collect parameters from multiple sequential runs
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --eval_frequency 1 --log_frequency 1 --num_epochs 20 --run_name "MinibatchAlgorithm-Collect-Correlation" --num_eval_samples 1

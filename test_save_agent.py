@@ -2,19 +2,8 @@
 # A simple test file to save and load an agent using trace repo's built-in methods
 # An agent should be decorated by trace.model
 
-from typing import List, Dict, Any
-from opto import trace
-@trace.model
-class SimpleAgent():
-    """A simple test agent"""
-    def __init__(self, tools_info: List[Dict[str, Any]]):
-        self.tools_info = trace.node(tools_info, trainable=True)
-        self.instructions = trace.node("Default instructions", trainable=True)
-    @trace.bundle()
-    def solve(self, tools_info, instructions, task):
-        return f"Solved: {task} with {len(tools_info)} tools and instructions: {instructions}"
-    def forward(self, task):
-        return self.solve(self.tools_info, self.instructions, task)
+from agents.tool_calling_agent import SimpleAgent
+
 def main():
     # Create agent
     tools = [{"name": "test_tool", "description": "A test tool"}]

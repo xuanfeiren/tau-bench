@@ -153,3 +153,16 @@ def message_to_action(message: Dict[str, Any]) -> Action:
         )
     else:
         return Action(name=RESPOND_ACTION_NAME, kwargs={"content": message["content"]})
+    
+@trace.model
+class SimpleAgent(Agent):
+    """A simple test agent"""
+    def __init__(self, tools_info: List[Dict[str, Any]]):
+        self.tools_info = trace.node(tools_info, trainable=True)
+        self.instructions = trace.node("Default instructions", trainable=True)
+    @trace.bundle()
+    def solve(self, tools_info, instructions, task):
+        return f"Solved: {task} with {len(tools_info)} tools and instructions: {instructions}"
+    def forward(self, task):
+        return self.solve(self.tools_info, self.instructions, task)
+    
