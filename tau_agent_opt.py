@@ -89,6 +89,8 @@ class TeacherGuide(AutoGuide):
     def get_feedback(self, task, output: SolveResult, info):   
         """Get feedback from the agent's output."""
         reward, messages, info = output
+        if info == "BadRequest":
+            return 0, "BadRequestError. Please adjust the tool information to the correct form."
         if reward == 1:
             feedback = "Correct"
         else:

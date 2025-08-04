@@ -95,7 +95,7 @@ class ToolCallingAgent(Agent):
             
             if step_result == -1:
                 print(f"Step {step}: Return 0 reward due to BadRequest error")
-                return 0, [], {}
+                return 0, [], "BadRequest"
             
             # Extract results
             next_message, action, env_response = step_result
