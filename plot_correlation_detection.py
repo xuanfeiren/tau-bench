@@ -10,7 +10,7 @@ import numpy as np
 from scipy import stats
 import seaborn as sns
 
-def load_data(filename='data_to_plot/correlation_5runs_clean.csv'):
+def load_data(filename='data_to_plot/correlation_no_outliers.csv'):
     """Load the correlation detection data."""
     try:
         df = pd.read_csv(filename)
@@ -144,11 +144,11 @@ def create_plots(df, correlation, p_value, improvement):
 def save_plots(fig):
     """Save the plots to files."""
     # Save as PNG
-    fig.savefig('correlation_detection_plots.png', dpi=300, bbox_inches='tight')
-    print("Saved plots as 'correlation_detection_plots.png'")
+    # fig.savefig('correlation_detection_plots.png', dpi=300, bbox_inches='tight')
+    # print("Saved plots as 'correlation_detection_plots.png'")
     
     # Save as PDF
-    fig.savefig('correlation_detection_plots.pdf', bbox_inches='tight')
+    fig.savefig('correlation_Aug5_remove_outliers.pdf', bbox_inches='tight')
     print("Saved plots as 'correlation_detection_plots.pdf'")
 
 def main():

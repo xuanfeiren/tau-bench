@@ -161,6 +161,8 @@ def main():
                        help='How often to run evaluation')
     parser.add_argument('--log_frequency', type=int, default=1,
                        help='How often to log results')
+    parser.add_argument('--save_frequency', type=int, default=None,
+                       help='How often to save the agent')
     
     # ExploreAlgorithm-specific parameters
     parser.add_argument('--max_buffer_size', type=int, default=5,
@@ -344,6 +346,7 @@ def main():
             "num_threads": args.num_threads,
             "eval_frequency": args.eval_frequency,
             "log_frequency": args.log_frequency,
+            "save_frequency": args.save_frequency,
             "num_phases": args.num_phases,
             "ucb_horizon": args.ucb_horizon,
             "num_to_sample": args.num_to_sample,
