@@ -2,16 +2,14 @@
 """
 Wandb Data Export and Plotting Script
 
-This script can:
-1. Export individual run data from wandb (not just aggregated min/max)
-2. Calculate proper standard error from multiple runs
-3. Create publication-quality plots with standard error shading
-4. Handle both wandb export and plotting from existing CSV data
+This script:
+1. Exports individual run data from wandb API
+2. Counts the number of runs per algorithm
+3. Creates publication-quality plots showing mean scores
+4. Calculates proper statistics from multiple runs when available
 
 Usage:
-    python wandb_export_and_plot.py --export  # Export from wandb
-    python wandb_export_and_plot.py --plot    # Plot from existing data
-    python wandb_export_and_plot.py --both    # Both export and plot
+    python wandb_export_and_plot.py --project your-project-name
 """
 
 import pandas as pd
@@ -41,7 +39,7 @@ except ImportError:
 # Algorithm configurations
 ALGORITHMS = {
     'BasicSearchAlgorithm': {
-        'display_name': 'BasicSearchAlgorithm',
+        'display_name': 'Best of n',
         'color': '#9B59B6',  # Purple
         'linestyle': '-'
     },
@@ -91,17 +89,19 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
     api = wandb.Api()
     
     # Get all runs from the project
-    runs = api.runs(f"your-entity/{project_name}")  # Replace 'your-entity' with your wandb entity
+    runs = api.runs(f"xuanfeiren-university-of-wisconsin-madison/{project_name}")  # Using the correct entity
     
     all_data = []
+    run_counts = {}
     
     for run in runs:
-        # Filter runs by algorithm name
+        # Filter runs by algorithm name - strict exact matching only
         run_name = run.name
         algorithm = None
         
         for alg_key in ALGORITHMS.keys():
-            if alg_key in run_name:
+            # Only match if run name exactly equals algorithm name
+            if run_name == alg_key:
                 algorithm = alg_key
                 break
         
@@ -109,6 +109,11 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
             continue
             
         print(f"Processing run: {run_name} (Algorithm: {algorithm})")
+        
+        # Count runs per algorithm
+        if algorithm not in run_counts:
+            run_counts[algorithm] = set()
+        run_counts[algorithm].add(run.id)
         
         # Get run history (metrics over time)
         history = run.history()
@@ -128,6 +133,12 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
                     'total_samples': row.get('Total samples', row.get('_step', idx) * 4),  # Estimate if not available
                     'test_score': row['Test score']
                 })
+    
+    # Print run counts
+    print("\n=== Run Counts by Algorithm ===")
+    for algorithm in ALGORITHMS.keys():
+        count = len(run_counts.get(algorithm, set()))
+        print(f"{algorithm}: {count} runs")
     
     # Convert to DataFrame
     df = pd.DataFrame(all_data)
@@ -190,60 +201,6 @@ def calculate_statistics(df: pd.DataFrame) -> pd.DataFrame:
     
     return pd.DataFrame(stats_data)
 
-def load_existing_csv_data(csv_file: str = "data_to_plot/plot_v0.csv") -> pd.DataFrame:
-    """
-    Load and process existing CSV data (with min/max aggregation).
-    Convert to format suitable for plotting.
-    """
-    df = pd.read_csv(csv_file)
-    
-    stats_data = []
-    
-    for algorithm in ALGORITHMS.keys():
-        score_col = f"Name: {algorithm} - Test score"
-        min_col = f"Name: {algorithm} - Test score__MIN"
-        max_col = f"Name: {algorithm} - Test score__MAX"
-        
-        if score_col not in df.columns:
-            continue
-            
-        for idx, row in df.iterrows():
-            total_samples = row['Total samples']
-            mean_score = row[score_col]
-            min_score = row[min_col] if min_col in df.columns else mean_score
-            max_score = row[max_col] if max_col in df.columns else mean_score
-            
-            # Skip empty rows
-            if pd.isna(mean_score) or mean_score == '':
-                continue
-                
-            # Convert to float
-            try:
-                mean_score = float(mean_score)
-                min_score = float(min_score) if pd.notna(min_score) and min_score != '' else mean_score
-                max_score = float(max_score) if pd.notna(max_score) and max_score != '' else mean_score
-            except (ValueError, TypeError):
-                continue
-            
-            # Estimate standard error from min/max range
-            # This is an approximation: SE ≈ (max - min) / (2 * 1.96) for 95% CI
-            range_val = max_score - min_score
-            estimated_std_error = range_val / (2 * 1.96) if range_val > 0 else 0
-            
-            stats_data.append({
-                'algorithm': algorithm,
-                'total_samples': int(total_samples),
-                'mean_score': mean_score,
-                'std_error': estimated_std_error,
-                'ci_lower': min_score,
-                'ci_upper': max_score,
-                'n_runs': 1,  # Unknown from aggregated data
-                'min_score': min_score,
-                'max_score': max_score
-            })
-    
-    return pd.DataFrame(stats_data)
-
 def subsample_data_points(x: np.ndarray, y: np.ndarray, yerr: np.ndarray, 
                          max_points: int = 15, strategy: str = 'random') -> tuple:
     """
@@ -273,10 +230,10 @@ def subsample_data_points(x: np.ndarray, y: np.ndarray, yerr: np.ndarray,
     
     return x[indices], y[indices], yerr[indices]
 
-def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_scores_with_stderr.pdf", 
+def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_scores_plot.pdf", 
                            max_points: int = 15, sampling_strategy: str = 'random'):
     """
-    Create a publication-quality plot with standard error shading using random sampling to reduce data points.
+    Create a publication-quality plot without standard error shading.
     """
     plt.style.use('default')  # Clean style
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -298,6 +255,7 @@ def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_sco
         x = alg_data['total_samples'].values
         y = alg_data['mean_score'].values
         yerr = alg_data['std_error'].values
+        n_runs = alg_data['n_runs'].values
         
         # Subsample data points for cleaner look
         x_sampled, y_sampled, yerr_sampled = subsample_data_points(x, y, yerr, max_points, sampling_strategy)
@@ -312,11 +270,7 @@ def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_sco
                label=config['display_name'],
                zorder=3)
         
-        # Add standard error shading
-        ax.fill_between(x_sampled, y_sampled - yerr_sampled, y_sampled + yerr_sampled, 
-                       color=config['color'], 
-                       alpha=0.3, 
-                       zorder=1)
+        # No standard error shading since we don't calculate standard errors
     
     # Customize plot
     ax.set_xlabel('Total samples', fontsize=14, fontweight='bold')
@@ -362,15 +316,10 @@ def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_sco
     plt.show()
 
 def main():
-    parser = argparse.ArgumentParser(description='Export wandb data and create plots with standard error')
-    parser.add_argument('--export', action='store_true', help='Export data from wandb')
-    parser.add_argument('--plot', action='store_true', help='Create plot from existing data')
-    parser.add_argument('--both', action='store_true', help='Both export and plot')
+    parser = argparse.ArgumentParser(description='Export wandb data and create plots showing run counts and mean scores')
     parser.add_argument('--project', default='tau-bench-retail-compare-search-algs', 
                        help='Wandb project name')
-    parser.add_argument('--csv-file', default='data_to_plot/plot_v0.csv',
-                       help='Existing CSV file to plot from')
-    parser.add_argument('--output', default='test_scores_with_stderr.pdf',
+    parser.add_argument('--output', default='test_scores_plot.pdf',
                        help='Output plot filename')
     parser.add_argument('--max-points', type=int, default=10,
                        help='Maximum number of points per algorithm (for subsampling)')
@@ -379,53 +328,51 @@ def main():
     
     args = parser.parse_args()
     
-    if not any([args.export, args.plot, args.both]):
-        args.both = True  # Default to both
-    
     stats_df = None
     
-    # Export data from wandb
-    if args.export or args.both:
-        print("=== Exporting data from wandb ===")
-        try:
-            raw_df = export_wandb_data(args.project)
-            if not raw_df.empty:
-                stats_df = calculate_statistics(raw_df)
-                stats_df.to_csv('wandb_statistics.csv', index=False)
-                print("Statistics saved to: wandb_statistics.csv")
-            else:
-                print("No data exported from wandb, will use existing CSV")
-                stats_df = None
-        except Exception as e:
-            print(f"Error exporting from wandb: {e}")
-            print("Will use existing CSV data instead")
-            stats_df = None
-    
-    # Plot data
-    if args.plot or args.both:
-        print("\n=== Creating plot ===")
-        
-        if stats_df is None or stats_df.empty:
-            print("Loading existing CSV data...")
-            stats_df = load_existing_csv_data(args.csv_file)
-        
-        if not stats_df.empty:
-            create_publication_plot(stats_df, args.output, args.max_points, args.sampling)
-            
-            # Print summary statistics
-            print("\n=== Summary Statistics ===")
-            for algorithm in ALGORITHMS.keys():
-                alg_data = stats_df[stats_df['algorithm'] == algorithm]
-                if not alg_data.empty:
-                    original_points = len(alg_data)
-                    sampled_points = min(original_points, args.max_points)
-                    print(f"\n{algorithm}:")
-                    print(f"  Original data points: {original_points}")
-                    print(f"  Sampled data points: {sampled_points}")
-                    print(f"  Score range: {alg_data['mean_score'].min():.3f} - {alg_data['mean_score'].max():.3f}")
-                    print(f"  Avg std error: {alg_data['std_error'].mean():.4f}")
+    # Export data from wandb (this is now mandatory)
+    print("=== Exporting data from wandb ===")
+    try:
+        raw_df = export_wandb_data(args.project)
+        if not raw_df.empty:
+            stats_df = calculate_statistics(raw_df)
+            stats_df.to_csv('wandb_statistics.csv', index=False)
+            print("Statistics saved to: wandb_statistics.csv")
         else:
-            print("No data available for plotting")
+            print("No data exported from wandb")
+            return
+    except Exception as e:
+        print(f"Error exporting from wandb: {e}")
+        return
+    
+    # Create plot
+    print("\n=== Creating plot ===")
+    
+    if not stats_df.empty:
+        create_publication_plot(stats_df, args.output, args.max_points, args.sampling)
+        
+        # Print summary statistics
+        print("\n=== Summary Statistics ===")
+        for algorithm in ALGORITHMS.keys():
+            alg_data = stats_df[stats_df['algorithm'] == algorithm]
+            if not alg_data.empty:
+                original_points = len(alg_data)
+                sampled_points = min(original_points, args.max_points)
+                max_runs = alg_data['n_runs'].max()
+                points_with_multiple_runs = len(alg_data[alg_data['n_runs'] > 1])
+                
+                print(f"\n{algorithm}:")
+                print(f"  Original data points: {original_points}")
+                print(f"  Sampled data points: {sampled_points}")
+                print(f"  Max runs per data point: {max_runs}")
+                print(f"  Data points with multiple runs: {points_with_multiple_runs}")
+                print(f"  Score range: {alg_data['mean_score'].min():.3f} - {alg_data['mean_score'].max():.3f}")
+                if points_with_multiple_runs > 0:
+                    print(f"  Has variation in data: Yes")
+                else:
+                    print(f"  Has variation in data: No (single runs only)")
+    else:
+        print("No data available for plotting")
 
 if __name__ == "__main__":
     main() 

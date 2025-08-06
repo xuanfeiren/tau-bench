@@ -28,7 +28,7 @@ from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as Miniba
 from opto.trainer.guide import AutoGuide
 
 # Import the agent from separate module to avoid pickle issues
-from agents.tool_calling_agent import ToolCallingAgent, message_to_action
+from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
 
 import litellm 
 litellm.drop_params = True
@@ -40,7 +40,7 @@ from datetime import datetime
 provider = "gemini"
 os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
 
-
+# litellm._turn_on_debug()
 OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
 
 TASK: You are optimizing a retail customer service agent by modifying:
