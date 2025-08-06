@@ -48,4 +48,7 @@ python tau_agent_opt.py --algorithm_name "DetectCorrelation"  --num_threads 20  
 python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithUCBValidation"
 
 ## Collect parameters from multiple sequential runs
-python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --eval_frequency 1 --log_frequency 1 --num_epochs 20 --run_name "MinibatchAlgorithm-Collect-Correlation" --num_eval_samples 1
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --eval_frequency 1 --log_frequency 1 --num_epochs 20 --run_name "MinibatchAlgorithm-Collect-Correlation" --num_eval_samples 
+
+## Evaluate initial agent
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Solve-all-tasks" --num_test_samples 115
