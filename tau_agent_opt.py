@@ -14,17 +14,15 @@ from opto.trace.modules import Module
 
 import json
 from litellm import completion
-from typing import List, Optional, Dict, Any
 import argparse
 
-from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
-from opto.trainer.algorithms.baselines import  MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation
-from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
+from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation
+# from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
 
 # Import the agent from separate module to avoid pickle issues
