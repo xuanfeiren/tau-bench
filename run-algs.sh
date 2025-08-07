@@ -55,3 +55,7 @@ python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Solve-
 
 python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithUCBValidation"
 python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency 3 --log_frequency 1 --num_proposals 2 --num_validate_samples 50 --num_epochs 30 --run_name "BasicSearchAlgorithm"
+
+python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 50 --run_name "LearnFromSuccess" --eval_frequency 5
+
+python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 2 --run_name "LearnFromSuccess-2conversations" --eval_frequency 1

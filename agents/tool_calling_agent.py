@@ -215,14 +215,14 @@ class ToolCallingAgent_Learn_from_Success(Agent):
         super().__init__()
         self.tools_info = trace.node(tools_info, trainable=True)
         self.wiki = wiki
-        self.additional_instructions = trace.node("Here are some successful conversation examples to help the agent solve the task: ", trainable=True)
+        self.conversations = trace.node({}, trainable=True)  # Dict[int, str] mapping task_index to conversation
         self.model = model
         self.provider = provider
         self.temperature = temperature
 
     @trace.bundle()
-    def solve(self, tools_info, additional_instructions, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
-        """Agent solves the task with the given tools_info."""
+    def solve(self, tools_info, conversations, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
+        """Agent solves the task with the given tools_info and task-specific conversation examples."""
         total_cost = 0.0
         
         # Wrap env.reset with retry logic
@@ -242,9 +242,16 @@ class ToolCallingAgent_Learn_from_Success(Agent):
         obs = env_reset_res.observation
         info = env_reset_res.info.model_dump()
         reward = 0.0
+        
+        # Get task-specific conversation if available
+        task_conversation = ""
+        if task_index is not None and task_index in conversations:
+            task_conversation = f"\n\nHere is a successful conversation example for this task, you can use it to help you solve the task:\n{conversations[task_index]}\n"
+        else:
+            task_conversation = "You are a helpful assistant."
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": self.wiki},
-            {"role": "system", "content": additional_instructions},
+            {"role": "system", "content": f"You are a helpful assistant.{task_conversation}"},
             {"role": "user", "content": obs},
         ]
         
@@ -330,7 +337,7 @@ class ToolCallingAgent_Learn_from_Success(Agent):
         if env is None:
             raise ValueError("Environment not set. Call set_env() before forward pass.")
         
-        return self.solve(self.tools_info, self.additional_instructions, env, task_input)
+        return self.solve(self.tools_info, self.conversations, env, task_input)
     
     def set_env(self, env):
         """Set the environment for this agent."""

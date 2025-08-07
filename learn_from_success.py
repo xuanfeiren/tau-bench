@@ -1,5 +1,5 @@
 # learn_from_success.py
-from agents.tool_calling_agent import ToolCallingAgent_Learn_from_Success as Agent
+from agents.tool_calling_agent import ToolCallingAgent_Learn_from_Success as ToolCallingAgent
 from tau_bench.envs import get_env
 from tau_bench.types import RunConfig
 import litellm 
@@ -29,6 +29,8 @@ from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.guide import AutoGuide
 from tau_agent_opt import create_retail_dataset
+from Trace.opto.trainer.algorithms.baselines import LearnFromSuccessAlgorithm
+
 provider = "gemini"
 class TeacherGuide(AutoGuide):
     """Guide that extract reward and feedback from the agent's output."""
@@ -71,22 +73,21 @@ class TeacherGuide(AutoGuide):
         """Metric for the agent's performance."""
         reward, messages, info = output
         return reward
+
 def main():
-    """Main function for ExploreAlgorithm training."""
-    parser = argparse.ArgumentParser(description='Train agent using search algorithms')
+    """Main function for LearnFromSuccessAlgorithm training."""
+    parser = argparse.ArgumentParser(description='Train agent using LearnFromSuccessAlgorithm')
     
     
     # Dataset parameters
-    parser.add_argument('--num_train_samples', type=int, default=50,
+    parser.add_argument('--num_train_samples', type=int, default=20,
                        help='Number of training samples')
     parser.add_argument('--num_validate_samples', type=int, default=50,
                        help='Number of validation samples')
-    parser.add_argument('--num_test_samples', type=int, default=50,
+    parser.add_argument('--num_test_samples', type=int, default=1,
                        help='Number of test samples')
     
     # Training parameters
-    parser.add_argument('--train_batch_size', type=int, default=1,
-                       help='Training batch size')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
     parser.add_argument('--eval_frequency', type=int, default=1,
@@ -95,14 +96,15 @@ def main():
                        help='How often to log results')
     parser.add_argument('--save_frequency', type=int, default=None,
                        help='How often to save the agent')
-    parser.add_argument('--num_epochs', type=int, default=20,
+    parser.add_argument('--num_epochs', type=int, default=50,
                        help='Number of training epochs')
+    
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the agent')
     parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the user')
-    parser.add_argument('--run_name', type=str, default='learn_from_success',
+    parser.add_argument('--run_name', type=str, default='debug',
                        help='Name of the run')
     args = parser.parse_args()
     
@@ -162,41 +164,37 @@ def main():
         # Initialize guide, optimizer, and logger
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
-        optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=args.run_name)
+        logger = WandbLogger(project="tau-bench-retail-learn-from-success", verbose=True, name=args.run_name)
         
-       
+        # Initialize the LearnFromSuccessAlgorithm
+        algorithm = LearnFromSuccessAlgorithm(
+            agent=agent,
+            optimizer=optimizer,
+            num_threads=args.num_threads,
+            logger=logger
+        )
         
         # Training parameters
         train_params = {
             "guide": guide,
             "train_dataset": train_dataset,
-            "validate_dataset": validate_dataset,
             "test_dataset": test_dataset,
-            "train_batch_size": args.train_batch_size,
-            "batch_size": args.train_batch_size,
             "num_epochs": args.num_epochs,
-            "num_proposals": args.num_proposals,
-            "num_threads": args.num_threads,
-            "eval_frequency": args.eval_frequency,
-            "log_frequency": args.log_frequency,
-            "save_frequency": args.save_frequency,
-            "evaluation_batch_size": args.evaluation_batch_size,
-            "num_eval_samples": args.num_eval_samples 
+            "eval_frequency": args.eval_frequency
         }
         
-      
-        
-      
-        
-       
+        print("Starting LearnFromSuccessAlgorithm training...")
+        # print(f"Training parameters: {train_params}")
+        print(f"Algorithm will process ALL remaining training tasks at each epoch")
         
         import time
         start_time = time.time()
-        algorithm.train(**train_params)
+        successful_conversations = algorithm.train(**train_params)
         duration = time.time() - start_time
-       
-               
+        
+        print(f"Training completed in {duration:.2f} seconds")
+        print(f"Total successful conversations collected: {len(successful_conversations)}")
+        
     except Exception as e:
         print(f"Error during training: {str(e)}")
         import traceback
