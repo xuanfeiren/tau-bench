@@ -53,9 +53,23 @@ python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --eval_frequency 1
 ## Evaluate initial agent
 python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Solve-all-tasks" --num_test_samples 115
 
-python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithUCBValidation"
-python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency 3 --log_frequency 1 --num_proposals 2 --num_validate_samples 50 --num_epochs 30 --run_name "BasicSearchAlgorithm"
+python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithValidation"
 
 python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 50 --run_name "LearnFromSuccess" --eval_frequency 5
 
-python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 2 --run_name "LearnFromSuccess-2conversations" --eval_frequency 1
+python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 50 --run_name "LearnFromSuccess" --eval_frequency 1
+
+# save 10 agents
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Save-agents" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_epochs 9 --eval_frequency 1 --log_frequency 1 --save_frequency 1 --num_eval_samples 1
+python best_candidate_identification.py 
+
+python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithValidation"
+python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithValidation"
+python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency 3 --log_frequency 1 --num_proposals 2 --num_validate_samples 50 --num_epochs 30 --run_name "BasicSearchAlgorithm"
+python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency 3 --log_frequency 1 --num_proposals 2 --num_validate_samples 50 --num_epochs 30 --run_name "BasicSearchAlgorithm"
+
+
+# debug for ExploreAlgorithm_LLMFA
+python tau_agent_opt.py --algorithm_name "ExploreAlgorithm_LLMFA" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3  --num_phases 10 --train_batch_size 2 --num_to_sample 2 --run_name "ExploreAlgorithm_v2.0-debug" --num_test_samples 1 --num_train_samples 1 --num_validate_samples 1
+
+python tau_agent_opt.py --algorithm_name "ExploreAlgorithm_LLMFA" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3  --num_phases 10 --train_batch_size 2 --num_to_sample 2 --run_name "ExploreAlgorithm_v2.0" 

@@ -20,13 +20,13 @@ from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
-from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM
+from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM, ExploreAlgorithm_LLMFA
 from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation
 # from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
-
+from agents.tool_calling_agent import ToolCallingAgent
 # Import the agent from separate module to avoid pickle issues
-from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
+# from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
 
 import litellm 
 litellm.drop_params = True
@@ -139,7 +139,7 @@ def main():
     
     # Algorithm selection
     parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
-                       choices=['ExploreAlgorithm', 'ExplorewithLLM', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
+                       choices=['ExploreAlgorithm', 'ExplorewithLLM', 'ExploreAlgorithm_LLMFA', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
                                'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation'],
                        help='Algorithm to use for training')
     
@@ -189,7 +189,7 @@ def main():
     parser.add_argument('--num_LLM_samples', type=int, default=5,
                        help='Number of LLM-generated candidates during exploration')
     parser.add_argument('--llm_model', type=str, default='gemini/gemini-2.0-flash',
-                       help='LLM model to use for ExplorewithLLM')
+                       help='LLM model to use for ExplorewithLLM and ExploreAlgorithm_LLMFA')
     parser.add_argument('--num_samples_in_prompt', type=int, default=5,
                        help='Number of samples to include in LLM prompt')
     
@@ -289,6 +289,17 @@ def main():
                 llm_model=args.llm_model,
                 num_samples_in_prompt=args.num_samples_in_prompt
             )
+        elif args.algorithm_name == 'ExploreAlgorithm_LLMFA':
+            algorithm = ExploreAlgorithm_LLMFA(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                max_buffer_size=args.max_buffer_size,
+                ucb_exploration_factor=args.ucb_exploration_factor,
+                llm_model=args.llm_model,
+                num_samples_in_prompt=args.num_samples_in_prompt
+            )
         elif args.algorithm_name == 'MinibatchAlgorithm':
             algorithm = MinibatchAlgorithm(
                 agent=agent,
@@ -355,7 +366,7 @@ def main():
         }
         
         # Add ExplorewithLLM and IslandSearchAlgorithm-specific parameters
-        if args.algorithm_name in ['ExplorewithLLM', 'IslandSearchAlgorithm']:
+        if args.algorithm_name in ['ExplorewithLLM', 'IslandSearchAlgorithm', 'ExploreAlgorithm_LLMFA']:
             train_params["num_LLM_samples"] = args.num_LLM_samples
         
         # Start training
@@ -370,9 +381,12 @@ def main():
             print(f"LLM model: {args.llm_model}")
             print(f"Number of LLM samples: {args.num_LLM_samples}")
             print(f"Discard frequency: {args.discard_frequency}")
-        elif args.algorithm_name in ['ExplorewithLLM']:
+        elif args.algorithm_name in ['ExplorewithLLM', 'ExploreAlgorithm_LLMFA']:
             print(f"LLM model: {args.llm_model}")
-            print(f"Number of LLM samples: {args.num_LLM_samples}")
+            if args.algorithm_name == 'ExplorewithLLM':
+                print(f"Number of LLM samples: {args.num_LLM_samples}")
+            print(f"UCB exploration factor: {args.ucb_exploration_factor}")
+            print(f"Max buffer size: {args.max_buffer_size}")
         elif args.algorithm_name in ['BasicSearchAlgorithm']:
             print(f"Number of proposals: {args.num_proposals}")
         elif args.algorithm_name in ['MinibatchwithValidation']:
