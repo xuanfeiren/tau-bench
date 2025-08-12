@@ -34,7 +34,7 @@ from opto.trainer.algorithms.baselines import MinibatchAlgorithm
 from opto.optimizers.utils import print_color
 from opto.trainer.evaluators import evaluate
 import numpy as np
-from opto.trainer.algorithms.BAI_algorithms import EvenlySplitAlgorithm, UCBAlgorithm, LLMSelectorAlgorithm
+from opto.trainer.algorithms.BAI_algorithms import EvenlySplitAlgorithm, UCBAlgorithm, LLMModel, LLMRegressionModel, LLMGenerator
 provider = "gemini"
 
 
@@ -88,8 +88,12 @@ def main():
                        help='Name of the run')
 
     # Algorithm choice
-    parser.add_argument('--bai_algo', type=str, default='even', choices=['even', 'ucb', 'llm'],
-                        help='Which BAI algorithm to run: even (EvenlySplit), ucb (UCBAlgorithm), llm (LLMSelectorAlgorithm)')
+    parser.add_argument('--bai_algo', type=str, default='even', choices=['even', 'ucb', 'llm_model', 'llm_regression', 'llm_generator'],
+                        help='Which BAI algorithm to run: even (EvenlySplit), ucb (UCBAlgorithm), llm_model (LLMModel), llm_regression (LLMRegressionModel), llm_generator (LLMGenerator)')
+    
+    # LLMRegressionModel specific parameters
+    parser.add_argument('--enable_estimate_scores', action='store_true', default=False,
+                        help='Enable score estimation in LLMRegressionModel (default: True)')
     args = parser.parse_args()
     
     try:
@@ -174,8 +178,16 @@ def main():
             algo = EvenlySplitAlgorithm(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts)
         elif args.bai_algo == 'ucb':
             algo = UCBAlgorithm(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts)
+        elif args.bai_algo == 'llm_model':
+            algo = LLMModel(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts)
+        elif args.bai_algo == 'llm_regression':
+            # Handle enable_estimate_scores flag
+            algo = LLMRegressionModel(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts, enable_estimate_scores=args.enable_estimate_scores)
+        elif args.bai_algo == 'llm_generator':
+            # Handle enable_estimate_scores flag for LLMGenerator (inherits from LLMRegressionModel)
+            algo = LLMGenerator(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts, enable_estimate_scores=args.enable_estimate_scores)
         else:
-            algo = LLMSelectorAlgorithm(base_agent, num_threads=args.num_threads, logger=logger, update_dicts=update_dicts)
+            raise ValueError(f"Unknown BAI algorithm: {args.bai_algo}")
 
         # Run a simple loop that steps through epochs and logs best candidate periodically
         algo.train(guide, validate_dataset, test_dataset, num_threads=args.num_threads, num_epochs=args.num_epochs, eval_frequency=args.eval_frequency)
