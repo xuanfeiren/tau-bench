@@ -60,11 +60,11 @@ def main():
     parser = argparse.ArgumentParser(description='Best Candidate Identification')
     
     # Dataset parameters
-    parser.add_argument('--num_train_samples', type=int, default=50,
+    parser.add_argument('--num_train_samples', type=int, default=10,
                        help='Number of training samples')
-    parser.add_argument('--num_validate_samples', type=int, default=50,
+    parser.add_argument('--num_validate_samples', type=int, default=10,
                        help='Number of validation samples')
-    parser.add_argument('--num_test_samples', type=int, default=50,
+    parser.add_argument('--num_test_samples', type=int, default=10,
                        help='Number of test samples')
     
     # Training parameters
@@ -78,6 +78,8 @@ def main():
                        help='How often to save the agent')
     parser.add_argument('--num_epochs', type=int, default=10,
                        help='Number of training epochs')
+    parser.add_argument('--num_agents', type=int, default=3,
+                       help='Number of agents to load from checkpoints')
     
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
@@ -88,7 +90,7 @@ def main():
                        help='Name of the run')
 
     # Algorithm choice
-    parser.add_argument('--bai_algo', type=str, default='even', choices=['even', 'ucb', 'llm_model', 'llm_regression', 'llm_generator'],
+    parser.add_argument('--bai_algo', type=str, default='llm_generator', choices=['even', 'ucb', 'llm_model', 'llm_regression', 'llm_generator'],
                         help='Which BAI algorithm to run: even (EvenlySplit), ucb (UCBAlgorithm), llm_model (LLMModel), llm_regression (LLMRegressionModel), llm_generator (LLMGenerator)')
     
     # LLMRegressionModel specific parameters
@@ -153,7 +155,7 @@ def main():
         
         # Load 10 agents from checkpoints folder
         agents = []
-        for i in range(3):
+        for i in range(args.num_agents):
             agent = ToolCallingAgent(
                 tools_info=env.tools_info,
                 wiki=env.wiki,

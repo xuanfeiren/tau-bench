@@ -72,9 +72,15 @@ ALGORITHMS = {
         'display_name': 'ExploreAlgorithm_v1.2',
         'color': '#FF69B4',  # pink
         'linestyle': '-'
-    }
-}
+    },
+    'ExploreAlgorithm-v0.2-batch-size-2': {
+        'display_name': 'ExploreAlgorithm_v0.2-batch-size-2',
+        'color': '#000000',  # black
+        'linestyle': '-'
+    },
 
+}
+   
 def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs", 
                      output_file: str = "wandb_individual_runs.csv") -> pd.DataFrame:
     """
