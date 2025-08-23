@@ -1,0 +1,6 @@
+# Requirements for Gemini API testing scripts
+# - test_embedding_model.py
+# - gemini_model_discovery.py
+# - gemini_rate_limit_test.py
+
+litellm>=1.0.0

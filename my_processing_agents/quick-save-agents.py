@@ -1,7 +1,7 @@
 # quick-save-agents.py
 
 
-from agents.tool_calling_agent import ToolCallingAgent
+from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
 from tau_bench.envs import get_env
 from tau_bench.types import RunConfig
 import litellm 
@@ -35,7 +35,7 @@ from opto.trainer.algorithms.baselines import MinibatchAlgorithm
 from opto.optimizers.utils import print_color
 from opto.trainer.evaluators import evaluate
 import numpy as np
-from opto.trainer.algorithms.BAI_algorithms import EvenlySplitAlgorithm, UCBAlgorithm, LLMSelectorAlgorithm
+from opto.trainer.algorithms.BAI_algorithms import EvenlySplitAlgorithm, UCBAlgorithm
 provider = "gemini"
 
 
@@ -136,25 +136,9 @@ def main():
         agents = []
         agent_to_save = ToolCallingAgent(tools_info=env.tools_info, wiki=env.wiki, model=config.model, provider=config.model_provider, temperature=config.temperature)
         agent_to_save.additional_instructions._set(""" Here are the additional instructions to help the agent solve the task:
-
-- When a user wants to exchange or modify an item but does not have the item ID, use 'get_product_details' to find available items and their IDs. List all available options (e.g., color, size, capacity, power source, brightness) to the user, and ask the user to pick which item and options they want.
-
-- When a user wants to return or cancel multiple items, and the user only provides item names, use 'get_product_details' to find the item IDs. For each item, present the options to the user and ask them to confirm which specific item they want to return or cancel before proceeding.
-
-- When a user wants to return or cancel multiple items, ask for all order IDs and item IDs first before calling any tool function. Avoid unnecessary back-and-forth to improve efficiency.
-
-- Before calling 'cancel_pending_order', 'return_delivered_order_items', 'exchange_delivered_order_items', or 'modify_pending_order_items', double check that you have the right order ID. Ensure you check the current order status by calling 'get_order_details' first.
-
-- Minimize explicit user confirmation steps. Only ask for user confirmation once you have gathered all the necessary information and are about to take a consequential action.
-
-- If a user says they want to cancel a charger for the tablet they lost, first check if that charger is part of the tablet order and try to cancel that order. Prioritize solving the primary issue first, as that will solve the downstream issues.
-
-- Do not ask the user for the order date; instead, use get_user_details to retrieve the order history.
-
-- If the user wants to exchange for a brighter or bigger item, use the `get_product_details` tool. Find the items that have the desired properties, and ask the user to pick items that have the desired properties and options. Provide available options before asking them to choose. For example, for desk lamps, ask about power source first, then brightness.
         """)
         agent_to_save.set_env(env)
-        agent_to_save.save(f"checkpoints/trained_agent_1.pkl")
+        agent_to_save.save(f"checkpoints/agent_0.pkl")
         return 
     except Exception as e:
         print(f"Error: {e}")

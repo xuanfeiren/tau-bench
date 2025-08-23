@@ -1,0 +1,46 @@
+[
+  {
+    "model": "gemini/text-embedding-004",
+    "quota_limit_value": null,
+    "quota_metric": null,
+    "quota_limit": null,
+    "quota_unit": null,
+    "quota_location": null,
+    "service": null,
+    "available": true,
+    "error_details": null
+  },
+  {
+    "model": "gemini/gemini-embedding-001",
+    "quota_limit_value": null,
+    "quota_metric": null,
+    "quota_limit": null,
+    "quota_unit": null,
+    "quota_location": null,
+    "service": null,
+    "available": true,
+    "error_details": null
+  },
+  {
+    "model": "gemini/text-embedding-001",
+    "quota_limit_value": null,
+    "quota_metric": null,
+    "quota_limit": null,
+    "quota_unit": null,
+    "quota_location": null,
+    "service": null,
+    "available": true,
+    "error_details": null
+  },
+  {
+    "model": "gemini/embedding-001",
+    "quota_limit_value": null,
+    "quota_metric": null,
+    "quota_limit": null,
+    "quota_unit": null,
+    "quota_location": null,
+    "service": null,
+    "available": true,
+    "error_details": null
+  }
+]

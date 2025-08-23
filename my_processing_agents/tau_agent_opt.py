@@ -24,7 +24,8 @@ from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM, Ex
 from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation
 # from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
-from agents.tool_calling_agent import ToolCallingAgent
+##TODO: change to ToolCallingAgent_v2
+from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
 # Import the agent from separate module to avoid pickle issues
 # from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
 

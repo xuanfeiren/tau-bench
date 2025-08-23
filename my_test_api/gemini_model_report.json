@@ -1,0 +1,189 @@
+{
+  "timestamp": "2025-08-22T16:49:29.180995",
+  "available_models": {
+    "text_generation": [
+      "gemini/gemini-2.0-flash-exp",
+      "gemini/gemini-2.0-flash",
+      "gemini/gemini-1.5-pro",
+      "gemini/gemini-1.5-flash",
+      "gemini/gemini-1.5-flash-8b"
+    ],
+    "embedding": [
+      "gemini/text-embedding-004",
+      "gemini/embedding-001"
+    ]
+  },
+  "model_info": {
+    "gemini/gemini-2.0-flash-exp": {
+      "available": true,
+      "response_model": "gemini-2.0-flash-exp",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 1,
+        "total_tokens": 11,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": null
+        }
+      },
+      "cost": 0.0
+    },
+    "gemini/gemini-2.0-flash": {
+      "available": true,
+      "response_model": "gemini-2.0-flash",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 1,
+        "total_tokens": 11,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": null
+        }
+      },
+      "cost": 4.1e-06
+    },
+    "gemini/gemini-1.5-pro": {
+      "available": true,
+      "response_model": "gemini-1.5-pro",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 1,
+        "total_tokens": 11,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": null
+        }
+      },
+      "cost": 0.0001085
+    },
+    "gemini/gemini-1.5-flash": {
+      "available": true,
+      "response_model": "gemini-1.5-flash",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 1,
+        "total_tokens": 11,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": null
+        }
+      },
+      "cost": 3.075e-06
+    },
+    "gemini/gemini-1.5-flash-8b": {
+      "available": true,
+      "response_model": "gemini-1.5-flash-8b",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 1,
+        "total_tokens": 11,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cached_tokens": null
+        }
+      },
+      "cost": 0.0
+    },
+    "gemini/text-embedding-004": {
+      "available": true,
+      "response_model": "text-embedding-004",
+      "dimensions": 768,
+      "usage": {
+        "completion_tokens": 0,
+        "prompt_tokens": 2,
+        "total_tokens": 2,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    },
+    "gemini/embedding-001": {
+      "available": true,
+      "response_model": "embedding-001",
+      "dimensions": 768,
+      "usage": {
+        "completion_tokens": 0,
+        "prompt_tokens": 2,
+        "total_tokens": 2,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    }
+  },
+  "rate_limits": {
+    "gemini/gemini-2.0-flash-exp": {
+      "total_requests": 15,
+      "successful": 11,
+      "rate_limited": 4,
+      "failed": 0,
+      "total_time": 3.298398971557617,
+      "avg_response_time": 0.38408556851473724,
+      "requests_per_second": 3.3349513187622124,
+      "estimated_rate_limit": "~11 requests in 3.3s"
+    },
+    "gemini/gemini-2.0-flash": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 3.318942070007324,
+      "avg_response_time": 0.39250931739807127,
+      "requests_per_second": 4.519512448123838,
+      "estimated_rate_limit": "No rate limit hit"
+    },
+    "gemini/gemini-1.5-pro": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 4.81366491317749,
+      "avg_response_time": 0.7917199770609538,
+      "requests_per_second": 3.116128827109931,
+      "estimated_rate_limit": "No rate limit hit"
+    },
+    "gemini/gemini-1.5-flash": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 2.8946352005004883,
+      "avg_response_time": 0.271708599726359,
+      "requests_per_second": 5.182000135079705,
+      "estimated_rate_limit": "No rate limit hit"
+    },
+    "gemini/gemini-1.5-flash-8b": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 2.914788007736206,
+      "avg_response_time": 0.25594329833984375,
+      "requests_per_second": 5.14617185201399,
+      "estimated_rate_limit": "No rate limit hit"
+    },
+    "gemini/text-embedding-004": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 2.836987018585205,
+      "avg_response_time": 0.23713792165120443,
+      "requests_per_second": 5.287299484183204,
+      "estimated_rate_limit": "No rate limit hit"
+    },
+    "gemini/embedding-001": {
+      "total_requests": 15,
+      "successful": 15,
+      "rate_limited": 0,
+      "failed": 0,
+      "total_time": 2.680291175842285,
+      "avg_response_time": 0.20669886271158855,
+      "requests_per_second": 5.596406888623297,
+      "estimated_rate_limit": "No rate limit hit"
+    }
+  }
+}

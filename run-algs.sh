@@ -60,7 +60,7 @@ python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_
 python learn_from_success.py --num_train_samples 50 --num_test_samples 50 --num_epochs 50 --run_name "LearnFromSuccess" --eval_frequency 1
 
 # save 10 agents
-python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Save-agents" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_epochs 9 --eval_frequency 1 --log_frequency 1 --save_frequency 1 --num_eval_samples 1
+python tau_agent_opt.py --algorithm_name "MinibatchAlgorithm" --run_name "Save-agents" --num_test_samples 1 --num_train_samples 50 --num_validate_samples 50 --num_epochs 10 --eval_frequency 1 --log_frequency 1 --save_frequency 1 --num_eval_samples 1
 python best_candidate_identification.py 
 
 python tau_agent_opt.py --algorithm_name "MinibatchwithValidation"  --eval_frequency 2 --log_frequency 1 --num_proposals 2  --num_epochs 20 --run_name "MinibatchwithValidation"
