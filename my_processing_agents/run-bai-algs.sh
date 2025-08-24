@@ -57,7 +57,9 @@ python run-bai-algos.py --num_train_samples 10 --num_validate_samples 10 --num_t
 python run-bai-algos.py --num_train_samples 10 --num_validate_samples 10 --num_test_samples 10 --num_threads 20 --eval_frequency 1 --log_frequency 1 --num_epochs 5 --bai_algo "llm_ts_onecall" --run_name "llm_ts_onecall-t-0.0"  --temperature 0.0 --num_agents 10
 
 # Score Prediction
-python run-score-prediction.py  --num_epochs 20 --run_name "llm-sqrt-error"
-python run-score-prediction.py  --num_epochs 20 --run_name "llm-sqrt-error"
-python run-score-prediction.py  --num_epochs 20 --run_name "llm-sqrt-error"
+python my_processing_agents/run-score-prediction.py  --num_epochs 2000 --run_name "Embedding_Regression"
+python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name "Embedding_Regression"
+
+# python run-score-prediction.py  --num_epochs 50 --run_name "Embedding_Regression"
+# python run-score-prediction.py  --num_epochs 20 --run_name "Embedding_Regression"
 

@@ -109,7 +109,7 @@ def main():
                        help='Name of the run')
 
     # Algorithm choice
-    parser.add_argument('--bai_algo', type=str, default='embedding_regression_true', 
+    parser.add_argument('--bai_algo', type=str, default='embedding_regression', 
                         choices=['score_prediction', 'score_prediction_half', 'embedding_regression', 'embedding_regression_true'],
                         help='Which Score Prediction algorithm to run: '
                              'score_prediction (ScorePrediction), '
