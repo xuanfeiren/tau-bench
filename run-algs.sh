@@ -73,3 +73,7 @@ python tau_agent_opt.py --algorithm_name "BasicSearchAlgorithm" --eval_frequency
 python tau_agent_opt.py --algorithm_name "ExploreAlgorithm_LLMFA" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3  --num_phases 10 --train_batch_size 2 --num_to_sample 2 --run_name "ExploreAlgorithm_v2.0-debug" --num_test_samples 1 --num_train_samples 1 --num_validate_samples 1
 
 python tau_agent_opt.py --algorithm_name "ExploreAlgorithm_LLMFA" --eval_frequency 1 --log_frequency 1 --max_buffer_size 3  --num_phases 10 --train_batch_size 2 --num_to_sample 2 --run_name "ExploreAlgorithm_v2.0" 
+
+# new ucb algorithm
+python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "vanilla-ucb" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --ucb_exploration_factor 0
+python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "ucb-with-control-variate" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --enable_control_variate --ucb_exploration_factor 0.1

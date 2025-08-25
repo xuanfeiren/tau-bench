@@ -21,7 +21,7 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM, ExploreAlgorithm_LLMFA
-from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation
+from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation, UCBAlgorithm
 # from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
 ##TODO: change to ToolCallingAgent_v2
@@ -141,7 +141,7 @@ def main():
     # Algorithm selection
     parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM', 'ExploreAlgorithm_LLMFA', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
-                               'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation'],
+                               'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation', 'UCBAlgorithm'],
                        help='Algorithm to use for training')
     
     # Dataset parameters
@@ -169,6 +169,10 @@ def main():
                        help='Maximum buffer size')
     parser.add_argument('--ucb_exploration_factor', type=float, default=0.1,
                        help='UCB exploration factor')
+    
+    # UCBAlgorithm-specific parameters
+    parser.add_argument('--enable_control_variate', action='store_true', default=False,
+                       help='Enable control variate for UCBAlgorithm')
     parser.add_argument('--num_phases', type=int, default=5,
                        help='Number of training phases')
     parser.add_argument('--ucb_horizon', type=int, default=50,
@@ -340,6 +344,15 @@ def main():
                 logger=logger,
                 num_threads=args.num_threads
             )
+        elif args.algorithm_name == 'UCBAlgorithm':
+            algorithm = UCBAlgorithm(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                ucb_exploration_factor=args.ucb_exploration_factor,
+                enable_control_variate=args.enable_control_variate
+            )
         else:
             raise ValueError(f"Unknown algorithm: {args.algorithm_name}")
         
@@ -396,6 +409,10 @@ def main():
         elif args.algorithm_name == 'DetectCorrelation':
             print(f"Number of epochs: {args.num_epochs}")
             print(f"Training batch size: {args.train_batch_size}")
+        elif args.algorithm_name == 'UCBAlgorithm':
+            print(f"Number of epochs: {args.num_epochs}")
+            print(f"UCB exploration factor: {args.ucb_exploration_factor}")
+            print(f"Enable control variate: {args.enable_control_variate}")
         
         import time
         start_time = time.time()
