@@ -22,6 +22,7 @@ from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.trainer.algorithms.explore import ExploreAlgorithm, ExplorewithLLM, ExploreAlgorithm_LLMFA
 from opto.trainer.algorithms.baselines import MinibatchAlgorithm, MinibatchwithValidation, BasicSearchAlgorithm, IslandSearchAlgorithm, DetectCorrelation, UCBAlgorithm
+from opto.trainer.algorithms.llm_search import llm_search
 # from opto.trainer.algorithms.baselines import EvaluateInitialCandidate as MinibatchAlgorithm
 from opto.trainer.guide import AutoGuide
 ##TODO: change to ToolCallingAgent_v2
@@ -141,7 +142,7 @@ def main():
     # Algorithm selection
     parser.add_argument('--algorithm_name', type=str, default='MinibatchAlgorithm',
                        choices=['ExploreAlgorithm', 'ExplorewithLLM', 'ExploreAlgorithm_LLMFA', 'MinibatchAlgorithm', 'BasicSearchAlgorithm', 
-                               'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation', 'UCBAlgorithm'],
+                               'MinibatchwithValidation', 'IslandSearchAlgorithm', 'DetectCorrelation', 'UCBAlgorithm', 'llm_search'],
                        help='Algorithm to use for training')
     
     # Dataset parameters
@@ -194,9 +195,17 @@ def main():
     parser.add_argument('--num_LLM_samples', type=int, default=5,
                        help='Number of LLM-generated candidates during exploration')
     parser.add_argument('--llm_model', type=str, default='gemini/gemini-2.0-flash',
-                       help='LLM model to use for ExplorewithLLM and ExploreAlgorithm_LLMFA')
+                       help='LLM model to use for ExplorewithLLM, ExploreAlgorithm_LLMFA, and llm_search')
     parser.add_argument('--num_samples_in_prompt', type=int, default=5,
                        help='Number of samples to include in LLM prompt')
+    
+    # llm_search-specific parameters
+    parser.add_argument('--num_generation_steps', type=int, default=5,
+                       help='Number of steps to generate new candidates in llm_search')
+    parser.add_argument('--validate_batch_size', type=int, default=20,
+                       help='Batch size for validation in llm_search')
+    parser.add_argument('--llm_temperature', type=float, default=0.0,
+                       help='Temperature for LLM score prediction in llm_search')
     
     # IslandSearchAlgorithm-specific parameters
     parser.add_argument('--num_islands', type=int, default=4,
@@ -353,6 +362,14 @@ def main():
                 ucb_exploration_factor=args.ucb_exploration_factor,
                 enable_control_variate=args.enable_control_variate
             )
+        elif args.algorithm_name == 'llm_search':
+            algorithm = llm_search(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
+           
         else:
             raise ValueError(f"Unknown algorithm: {args.algorithm_name}")
         
@@ -376,7 +393,9 @@ def main():
             "num_to_sample": args.num_to_sample,
             "evaluation_batch_size": args.evaluation_batch_size,
             "discard_frequency": args.discard_frequency,  # For IslandSearchAlgorithm
-            "num_eval_samples": args.num_eval_samples  # For MinibatchwithValidation and others
+            "num_eval_samples": args.num_eval_samples,  # For MinibatchwithValidation and others
+            "num_generation_steps": args.num_generation_steps,  # For llm_search
+            "validate_batch_size": args.validate_batch_size,  # For llm_search
         }
         
         # Add ExplorewithLLM and IslandSearchAlgorithm-specific parameters
@@ -413,6 +432,10 @@ def main():
             print(f"Number of epochs: {args.num_epochs}")
             print(f"UCB exploration factor: {args.ucb_exploration_factor}")
             print(f"Enable control variate: {args.enable_control_variate}")
+        elif args.algorithm_name == 'llm_search':
+            print(f"Number of epochs: {args.num_epochs}")
+            print(f"Number of generation steps: {args.num_generation_steps}")
+            print(f"Validate batch size: {args.validate_batch_size}")
         
         import time
         start_time = time.time()

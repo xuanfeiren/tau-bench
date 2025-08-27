@@ -5,13 +5,15 @@
 # - score_prediction: ScorePrediction - LLM-based score prediction for all candidates
 # - score_prediction_half: ScorePrediction_half_buffer - Score prediction with half buffer evaluation
 # - embedding_regression: Embedding_Regression - SGD-based linear regression on embeddings
+# - projected_embedding_regression: Projected_Embedding_Regression - Dimensionality reduction with Gaussian random matrix
 # - embedding_regression_true: Embedding_Regression_with_true_scores - Linear regression using ground truth scores
 #
 # Usage examples:
 # python run-score-prediction.py --bai_algo score_prediction --num_epochs 10
 # python run-score-prediction.py --bai_algo score_prediction_half --num_agents 5 --num_epochs 15
-# python run-score-prediction.py --bai_algo embedding_regression --num_epochs 20 --learning_rate 0.01
-# python run-score-prediction.py --bai_algo embedding_regression_true --num_epochs 5
+# python run-score-prediction.py --bai_algo embedding_regression --num_epochs 20 --learning_rate 0.01 --alpha 1e-4
+# python run-score-prediction.py --bai_algo projected_embedding_regression --num_epochs 20 --lower_dim 10 --alpha 1e-4
+# python run-score-prediction.py --bai_algo embedding_regression_true --num_epochs 5 --alpha 1e-4
 # python run-score-prediction.py --bai_algo score_prediction --temperature 0.5
 
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
@@ -52,6 +54,7 @@ from Trace.opto.trainer.algorithms.score_prediction_algorithm import (
     ScorePrediction,
     ScorePrediction_half_buffer,
     Embedding_Regression,
+    Projected_Embedding_Regression,
     Embedding_Regression_with_true_scores
 )
 provider = "gemini"
@@ -109,23 +112,30 @@ def main():
                        help='Name of the run')
 
     # Algorithm choice
-    parser.add_argument('--bai_algo', type=str, default='embedding_regression', 
-                        choices=['score_prediction', 'score_prediction_half', 'embedding_regression', 'embedding_regression_true'],
+    parser.add_argument('--bai_algo', type=str, default='score_prediction_half', 
+                        choices=['score_prediction', 'score_prediction_half', 'embedding_regression', 'projected_embedding_regression', 'embedding_regression_true'],
                         help='Which Score Prediction algorithm to run: '
                              'score_prediction (ScorePrediction), '
                              'score_prediction_half (ScorePrediction_half_buffer), '
                              'embedding_regression (Embedding_Regression), '
+                             'projected_embedding_regression (Projected_Embedding_Regression), '
                              'embedding_regression_true (Embedding_Regression_with_true_scores)')
     
     # Score Prediction specific parameters
     parser.add_argument('--temperature', type=float, default=0.0,
                         help='Temperature for LLM sampling in score prediction')
+    parser.add_argument('--validate_batch_size', type=int, default=10,
+                        help='Batch size for validation')
     
     # Embedding Regression specific parameters
     parser.add_argument('--learning_rate', type=float, default=0.01,
                         help='Learning rate for SGD in embedding regression')
     parser.add_argument('--embedding_model', type=str, default='gemini/embedding-001',
                         help='Embedding model to use for Embedding_Regression',choices=['gemini/text-embedding-004','gemini/embedding-001'])
+    parser.add_argument('--alpha', type=float, default=1e-4,
+                        help='Regularization strength for Ridge regression in embedding algorithms')
+    parser.add_argument('--lower_dim', type=int, default=10,
+                        help='Lower dimension for projected embedding regression (only used with projected_embedding_regression)')
     
     # Ground truth scores parameter
     parser.add_argument('--ground_truth_scores', type=str, default="0.3140,0.5320,0.3186,0.2644,0.3788,0.1064,0.2780,0.4700,0.1960,0.5540",
@@ -253,6 +263,7 @@ def main():
             print_color("  Strategy: SGD-based linear regression on embeddings", 'cyan')
             print_color(f"  Embedding model: {args.embedding_model}", 'cyan')
             print_color(f"  Learning rate: {args.learning_rate}", 'cyan')
+            print_color(f"  Regularization strength (alpha): {args.alpha}", 'cyan')
             algo = Embedding_Regression(
                 base_agent, 
                 num_threads=args.num_threads, 
@@ -260,11 +271,30 @@ def main():
                 update_dicts=update_dicts,
                 ground_truth_scores=ground_truth_scores,
                 embedding_model=args.embedding_model,
-                learning_rate=args.learning_rate
+                learning_rate=args.learning_rate,
+                alpha=args.alpha
+            )
+        elif args.bai_algo == 'projected_embedding_regression':
+            print_color("  Strategy: Projected embedding regression with Gaussian random matrix", 'cyan')
+            print_color(f"  Embedding model: {args.embedding_model}", 'cyan')
+            print_color(f"  Learning rate: {args.learning_rate}", 'cyan')
+            print_color(f"  Regularization strength (alpha): {args.alpha}", 'cyan')
+            print_color(f"  Lower dimension: {args.lower_dim}", 'cyan')
+            algo = Projected_Embedding_Regression(
+                base_agent, 
+                num_threads=args.num_threads, 
+                logger=logger, 
+                update_dicts=update_dicts,
+                ground_truth_scores=ground_truth_scores,
+                embedding_model=args.embedding_model,
+                learning_rate=args.learning_rate,
+                alpha=args.alpha,
+                lower_dim=args.lower_dim
             )
         elif args.bai_algo == 'embedding_regression_true':
             print_color("  Strategy: Linear regression using ground truth scores (no SGD)", 'cyan')
             print_color(f"  Embedding model: {args.embedding_model}", 'cyan')
+            print_color(f"  Regularization strength (alpha): {args.alpha}", 'cyan')
             print_color("  Note: Uses least squares with true scores for misspecification analysis", 'cyan')
             algo = Embedding_Regression_with_true_scores(
                 base_agent, 
@@ -273,7 +303,8 @@ def main():
                 update_dicts=update_dicts,
                 ground_truth_scores=ground_truth_scores,
                 embedding_model=args.embedding_model,
-                learning_rate=args.learning_rate  # Inherited but not used in this version
+                learning_rate=args.learning_rate,  # Inherited but not used in this version
+                alpha=args.alpha
             )
         else:
             raise ValueError(f"Unknown Score Prediction algorithm: {args.bai_algo}")
@@ -286,7 +317,8 @@ def main():
             num_threads=args.num_threads, 
             num_epochs=args.num_epochs, 
             eval_frequency=args.eval_frequency,
-            temperature=args.temperature
+            temperature=args.temperature,
+            validate_batch_size=args.validate_batch_size
         )
 
         print("Completed Score Prediction run.")

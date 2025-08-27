@@ -76,4 +76,9 @@ python tau_agent_opt.py --algorithm_name "ExploreAlgorithm_LLMFA" --eval_frequen
 
 # new ucb algorithm
 python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "vanilla-ucb" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --ucb_exploration_factor 0
-python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "ucb-with-control-variate" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --enable_control_variate --ucb_exploration_factor 0.1
+python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "ucb-with-control-variate" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --enable_control_variate --ucb_exploration_factor 0
+python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "vanilla-ucb" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --ucb_exploration_factor 0
+python my_processing_agents/tau_agent_opt.py --algorithm_name "UCBAlgorithm" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "ucb-with-control-variate" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --enable_control_variate --ucb_exploration_factor 0
+
+# debug for llm_search
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-debug" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50  --num_generation_steps 5 --validate_batch_size 20 --num_eval_samples 5

@@ -58,8 +58,39 @@ python run-bai-algos.py --num_train_samples 10 --num_validate_samples 10 --num_t
 
 # Score Prediction
 python my_processing_agents/run-score-prediction.py  --num_epochs 2000 --run_name "Embedding_Regression"
-python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name "Embedding_Regression"
+python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name "Embedding_regularized_Regression" --bai_algo "embedding_regression" --validate_batch_size 10
 
 # python run-score-prediction.py  --num_epochs 50 --run_name "Embedding_Regression"
 # python run-score-prediction.py  --num_epochs 20 --run_name "Embedding_Regression"
+
+python my_processing_agents/run-score-prediction.py  --num_epochs 200 --run_name "score_prediction_half" --bai_algo "score_prediction_half" --validate_batch_size 2 --run_name "score_prediction_half-small-batch"
+
+
+# debug for projected embedding regression
+
+
+
+
+
+
+
+
+
+# TODO: Aug 26, 2025
+# Regularized Embedding Regression
+for i in {1..2}; do
+    python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name "Embedding_regularized_Regression" --bai_algo "embedding_regression" --validate_batch_size 10 --alpha 1e-4 
+done
+
+for i in {1..2}; do
+    python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name "Projected_Embedding_Regression" --bai_algo "projected_embedding_regression" --validate_batch_size 10 --alpha 0.1 --lower_dim 10
+done
+
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50  --num_generation_steps 5 --validate_batch_size 20 --num_eval_samples 5
+done
+
+
+
+
 
