@@ -206,6 +206,12 @@ def main():
                        help='Batch size for validation in llm_search')
     parser.add_argument('--llm_temperature', type=float, default=0.0,
                        help='Temperature for LLM score prediction in llm_search')
+    parser.add_argument('--select_arm_by_predicted_score', action='store_true', default=False,
+                       help='Whether to select arm by predicted score or mean score in llm_search')
+    parser.add_argument('--num_multiple_generations', type=int, default=1,
+                       help='Number of times to call OptoPrime optimizer to generate more candidates in llm_search')
+    parser.add_argument('--do_validation', action='store_true', default=False,
+                       help='Whether to do validation in llm_search (if False, only uses training data)')
     
     # IslandSearchAlgorithm-specific parameters
     parser.add_argument('--num_islands', type=int, default=4,
@@ -367,7 +373,10 @@ def main():
                 agent=agent,
                 optimizer=optimizer,
                 logger=logger,
-                num_threads=args.num_threads
+                num_threads=args.num_threads,
+                select_arm_by_predicted_score=args.select_arm_by_predicted_score,
+                num_multiple_generations=args.num_multiple_generations,
+                do_validation=args.do_validation
             )
            
         else:
@@ -436,6 +445,9 @@ def main():
             print(f"Number of epochs: {args.num_epochs}")
             print(f"Number of generation steps: {args.num_generation_steps}")
             print(f"Validate batch size: {args.validate_batch_size}")
+            print(f"Select arm by predicted score: {args.select_arm_by_predicted_score}")
+            print(f"Number of multiple generations: {args.num_multiple_generations}")
+            print(f"Do validation: {args.do_validation}")
         
         import time
         start_time = time.time()
