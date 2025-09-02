@@ -36,48 +36,74 @@ except ImportError:
     WANDB_AVAILABLE = False
     print("Warning: wandb not available. Only plotting from existing data will work.")
 
-# Algorithm configurations
+# Algorithm configurations with distinct colors and line styles
 ALGORITHMS = {
+    # Baseline algorithms - solid lines with cooler colors
     'BasicSearchAlgorithm': {
         'display_name': 'Best of n',
         'color': '#9B59B6',  # Purple
-        'linestyle': '-'
+        'linestyle': '-',
+        'linewidth': 2.5
     },
-    'IslandSearchAlgorithm': {
-        'display_name': 'IslandSearchAlgorithm', 
-        'color': '#6C5CE7',  # Dark purple
-        'linestyle': '-'
-    },
+    # 'IslandSearchAlgorithm': {
+    #     'display_name': 'IslandSearchAlgorithm', 
+    #     'color': '#6C5CE7',  # Light purple
+    #     'linestyle': '--',
+    #     'linewidth': 2.5
+    # },
     'MinibatchwithValidation': {
         'display_name': 'MinibatchwithValidation',
-        'color': '#74B9FF',  # Light blue (dashed in original)
-        'linestyle': '-'
+        'color': '#74B9FF',  # Light blue
+        'linestyle': '-.',
+        'linewidth': 2.5
     },
-    'ExploreOnlyLLM_v1.0': {
-        'display_name': 'ExploreOnlyLLM',
-        'color': '#00B894',  # Teal
-        'linestyle': '-'
+    
+    # # Exploration algorithms - warmer colors with varied line styles
+    # 'ExploreOnlyLLM_v1.0': {
+    #     'display_name': 'ExploreOnlyLLM',
+    #     'color': '#00B894',  # Teal green
+    #     'linestyle': '-',
+    #     'linewidth': 2.5
+    # },
+    # 'ExplorewithLLM_v1.0': {
+    #     'display_name': 'ExplorewithLLM',
+    #     'color': '#E17055',  # Coral
+    #     'linestyle': '--',
+    #     'linewidth': 2.5
+    # },
+    # 'ExploreAlgorithm_v1.0': {
+    #     'display_name': 'ExploreAlgorithm v1.0',
+    #     'color': '#00CED1',  # Dark turquoise
+    #     'linestyle': '-',
+    #     'linewidth': 2.5
+    # },
+    # 'ExploreAlgorithm_v1.2': {
+    #     'display_name': 'ExploreAlgorithm v1.2',
+    #     'color': '#FF69B4',  # Hot pink
+    #     'linestyle': ':',
+    #     'linewidth': 2.5
+    # },
+    
+    # LLM-based search algorithms - distinctive colors and styles
+    'llm-search-xml': {
+        'display_name': 'LLM Search',
+        'color': '#FF6B35',  # Bright orange-red
+        'linestyle': '-',
+        'linewidth': 3.0  # Slightly thicker for emphasis
     },
-    'ExplorewithLLM_v1.0': {
-        'display_name': 'ExplorewithLLM',
-        'color': '#E17055',  # Orange/brown
-        'linestyle': '-'
+    'llm-search-no-regressor': {
+        'display_name': 'LLM Search (no regressor)',
+        'color': '#2E86AB',  # Deep blue
+        'linestyle': '--',
+        'linewidth': 3.0
     },
-    'ExploreAlgorithm_v1.0': {
-        'display_name': 'ExploreAlgorithm',
-        'color': '#00CED1',  # Cyan
-        'linestyle': '-'
+    'llm-search-more-generation-xml': {
+        'display_name': 'LLM Search (Multi-Gen)',
+        'color': '#A23B72',  # Deep magenta
+        'linestyle': '-.',
+        'linewidth': 3.0
     },
-    'ExploreAlgorithm_v1.2': {
-        'display_name': 'ExploreAlgorithm_v1.2',
-        'color': '#FF69B4',  # pink
-        'linestyle': '-'
-    },
-    'ExploreAlgorithm-v0.2-batch-size-2': {
-        'display_name': 'ExploreAlgorithm_v0.2-batch-size-2',
-        'color': '#000000',  # black
-        'linestyle': '-'
-    },
+
 
 }
    
@@ -164,13 +190,14 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
     
     return df
 
-def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100) -> pd.DataFrame:
+def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100, use_cummax: bool = False) -> pd.DataFrame:
     """
     Calculate mean, standard error, and confidence intervals for each algorithm by binning data into intervals.
     
     Args:
         df: DataFrame with individual run data
         interval_size: Size of each interval (default 100)
+        use_cummax: If True, calculate cumulative maximum scores instead of mean scores
         
     Returns:
         DataFrame with calculated statistics for each interval
@@ -182,7 +209,17 @@ def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100
     intervals = list(range(0, int(max_samples) + interval_size, interval_size))
     
     for algorithm in df['algorithm'].unique():
-        alg_data = df[df['algorithm'] == algorithm]
+        alg_data = df[df['algorithm'] == algorithm].sort_values(['run_id', 'total_samples'])
+        
+        if use_cummax:
+            # Calculate cumulative maximum for each run
+            cummax_data = []
+            for run_id in alg_data['run_id'].unique():
+                run_data = alg_data[alg_data['run_id'] == run_id].sort_values('total_samples')
+                run_data = run_data.copy()
+                run_data['cummax_score'] = run_data['test_score'].cummax()
+                cummax_data.append(run_data)
+            alg_data = pd.concat(cummax_data, ignore_index=True)
         
         for i in range(len(intervals) - 1):
             interval_start = intervals[i]
@@ -197,8 +234,11 @@ def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100
             
             if len(interval_data) == 0:
                 continue
-                
-            scores = interval_data['test_score'].values
+            
+            if use_cummax:
+                scores = interval_data['cummax_score'].values
+            else:
+                scores = interval_data['test_score'].values
             n_points = len(scores)
             
             if n_points > 1:
@@ -294,7 +334,7 @@ def create_publication_plot_with_intervals(stats_df: pd.DataFrame, output_file: 
     
     # Set fixed y-axis range
     y_min_plot = 0.35
-    y_max_plot = 0.48
+    y_max_plot = 0.5
     
     for algorithm in ALGORITHMS.keys():
         alg_data = stats_df[stats_df['algorithm'] == algorithm].sort_values('interval_center')
@@ -317,7 +357,7 @@ def create_publication_plot_with_intervals(stats_df: pd.DataFrame, output_file: 
         ax.plot(x, y,
                color=config['color'], 
                linestyle=config['linestyle'],
-               linewidth=2.5, 
+               linewidth=config.get('linewidth', 2.5), 
                marker='o', 
                markersize=6,
                label=config['display_name'],
@@ -373,6 +413,94 @@ def create_publication_plot_with_intervals(stats_df: pd.DataFrame, output_file: 
     print(f"Plot saved as: {pdf_file} and {png_file}")
     plt.show()
 
+def create_max_score_plot_with_intervals(stats_df: pd.DataFrame, output_file: str = "max_scores_with_stderr.pdf"):
+    """
+    Create a publication-quality plot showing cumulative maximum scores with shaded areas showing standard error.
+    """
+    plt.style.use('default')  # Clean style
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # Set fixed y-axis range
+    y_min_plot = 0.35
+    y_max_plot = 0.52  # Increased to accommodate 0.5 scores
+    
+    for algorithm in ALGORITHMS.keys():
+        alg_data = stats_df[stats_df['algorithm'] == algorithm].sort_values('interval_center')
+        
+        if alg_data.empty:
+            continue
+            
+        config = ALGORITHMS[algorithm]
+        
+        x = alg_data['interval_center'].values
+        y = alg_data['mean_score'].values
+        yerr = alg_data['std_error'].values
+        n_points = alg_data['n_points'].values
+        
+        # Calculate upper and lower bounds for shaded area
+        y_upper = y + yerr
+        y_lower = y - yerr
+        
+        # Plot main line
+        ax.plot(x, y,
+               color=config['color'], 
+               linestyle=config['linestyle'],
+               linewidth=config.get('linewidth', 2.5), 
+               marker='o', 
+               markersize=6,
+               label=config['display_name'],
+               zorder=3)
+        
+        # Add shaded area for standard error (for all points)
+        # For single points, std_error will be 0, so shadow will be just the line
+        ax.fill_between(x, y_lower, y_upper,
+                       color=config['color'],
+                       alpha=0.1,  # Semi-transparent
+                       zorder=1)
+    
+    # Customize plot
+    ax.set_xlabel('Total samples', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Highest score so far', fontsize=14, fontweight='bold')
+    ax.set_title('Highest score so far with Standard Error', fontsize=16, fontweight='bold')
+    
+    # Set axis limits based on data
+    ax.set_xlim(0, 2050)
+    ax.set_ylim(y_min_plot, y_max_plot)
+    
+    print(f"Y-axis range set to: {y_min_plot:.1f} to {y_max_plot:.1f}")
+    
+    # Customize ticks
+    ax.set_xticks([0, 500, 1000, 1500, 2000])
+    ax.set_xticklabels(['0', '500', '1k', '1.5k', '2k'])
+    
+    # Set nice y-axis ticks
+    y_tick_step = max(0.05, (y_max_plot - y_min_plot) / 6)  # Aim for ~6 ticks
+    y_tick_step = np.ceil(y_tick_step * 20) / 20  # Round to nearest 0.05
+    y_ticks = np.arange(np.ceil(y_min_plot / y_tick_step) * y_tick_step, 
+                       y_max_plot + y_tick_step/2, 
+                       y_tick_step)
+    ax.set_yticks(y_ticks)
+    
+    # Grid and legend
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=11, loc='upper left', frameon=True, fancybox=True, shadow=True)
+    
+    # Remove top and right spines for cleaner look
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    plt.tight_layout()
+    
+    # Save as PDF and PNG
+    pdf_file = output_file
+    png_file = output_file.replace('.pdf', '.png')
+    
+    plt.savefig(pdf_file, format='pdf', dpi=300, bbox_inches='tight')
+    plt.savefig(png_file, format='png', dpi=300, bbox_inches='tight')
+    
+    print(f"Max score plot saved as: {pdf_file} and {png_file}")
+    plt.show()
+
 def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_scores_plot.pdf"):
     """
     Create a publication-quality plot without standard error shading (legacy function).
@@ -382,7 +510,7 @@ def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_sco
     
     # Set fixed y-axis range
     y_min_plot = 0.3
-    y_max_plot = 0.55
+    y_max_plot = 0.6
     
     for algorithm in ALGORITHMS.keys():
         alg_data = stats_df[stats_df['algorithm'] == algorithm].sort_values('total_samples')
@@ -399,7 +527,7 @@ def create_publication_plot(stats_df: pd.DataFrame, output_file: str = "test_sco
         ax.plot(x, y, 
                color=config['color'], 
                linestyle=config['linestyle'],
-               linewidth=2.5, 
+               linewidth=config.get('linewidth', 2.5), 
                marker='o', 
                markersize=6,
                label=config['display_name'],
@@ -485,12 +613,23 @@ def main():
         print(f"Error exporting from wandb: {e}")
         return
     
-    # Create plot
-    print("\n=== Creating plot ===")
+    # Create plots
+    print("\n=== Creating plots ===")
     
     if not stats_df.empty:
         if args.use_intervals:
+            # Create regular test score plot
             create_publication_plot_with_intervals(stats_df, args.output)
+            
+            # Create cumulative maximum score plot
+            print("\n=== Creating cumulative maximum score plot ===")
+            max_stats_df = calculate_statistics_by_intervals(raw_df, args.interval_size, use_cummax=True)
+            max_output_file = args.output.replace('.pdf', '_max.pdf')
+            create_max_score_plot_with_intervals(max_stats_df, max_output_file)
+            
+            # Save max statistics
+            max_stats_df.to_csv('wandb_max_statistics.csv', index=False)
+            print("Max score statistics saved to: wandb_max_statistics.csv")
         else:
             create_publication_plot(stats_df, args.output)
         

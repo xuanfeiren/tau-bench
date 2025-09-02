@@ -109,13 +109,32 @@ for i in {1..3}; do
 done
 
 # 2. Classical LLM search. At each epoch, generate 4*3 candidates. Evaluate those 4 with the selected arm. Compare with 1.
-python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search-more-generation" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-more-generation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
 # 3. select arms by mean scores. Compare with 1.
 python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5  --num_multiple_generations 1 --do_validation 
 # 4. Run 1 without validation. Compare with 1.
 python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-without-validation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1  
 
+# debug for xml format
 
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-more-generation-debug-xml" --num_test_samples 2 --num_train_samples 2 --num_validate_samples 2 --num_generation_steps 2 --validate_batch_size 2 --num_eval_samples 3 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
 
+# Sept 1, 2025. no validation for llm_search
 
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-without-validation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1  
+done
 
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-without-validation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1  
+done
+
+# Sept 1 night
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-continue-response" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+done
+
+# Sept 2 large scale experiement
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 50 --train_batch_size 2  --run_name "llm-search-large-scale" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+done
