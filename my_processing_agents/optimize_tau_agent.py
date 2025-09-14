@@ -1,0 +1,327 @@
+# Train agent using PrioritySearch algorithm on tau-bench
+from tau_bench.envs import get_env
+from tau_bench.types import RunConfig
+from tau_bench.envs.user import UserStrategy
+from tau_bench.retry_utils import auto_retry_with_exponential_backoff
+
+import opto 
+from opto import trace
+from opto.optimizers import OptoPrime 
+from opto.trace.nodes import GRAPH
+from opto.trace.modules import Module 
+
+# Copyright Sierra
+
+import json
+from litellm import completion
+import argparse
+
+from tau_bench.envs.base import Env
+from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
+from tau_bench.model_utils.model.utils import trim_conversation_messages
+from opto.trainer.loggers import WandbLogger, DefaultLogger
+from opto.features.priority_search.priority_search_modified import PrioritySearch
+from opto.trainer.guide import Guide
+##TODO: change to ToolCallingAgent_v2
+from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
+# Import the agent from separate module to avoid pickle issues
+# from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
+
+import litellm 
+litellm.drop_params = True
+litellm.suppress_debug_info = True
+import sys
+import os
+from datetime import datetime
+# provider = "vertex_ai"
+provider = "gemini"
+os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
+
+# litellm._turn_on_debug()
+OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
+
+TASK: You are optimizing a retail customer service agent by modifying:
+1. Tool descriptions - to clarify tool usage and prevent errors
+2. Additional instructions - to provide strategic guidance and best practices
+
+#Variables contains: 
+- Tool schemas with function names, descriptions, and parameters
+- Additional instructions that guide the agent's behavior
+
+#Feedback contains: Either "Correct" (success) or conversation history (failure analysis needed)
+
+INSTRUCTIONS:
+1. If feedback is "Correct": Make minor refinements to maintain successful patterns
+2. If feedback contains conversation history: Analyze failure patterns to identify:
+   - Which tools were used incorrectly or missed
+   - Parameter confusion or formatting errors  
+   - Workflow sequence problems
+   - Missing strategic guidance or best practices
+
+OPTIMIZATION RULES:
+For Tool Information:
+- ONLY modify the 'description' fields of tools
+- NEVER change function names or parameter schemas
+- MUST include ALL original tools in your output
+
+For Additional Instructions:
+- Provide specific guidance based on observed failures
+- Include best practices for retail customer service
+- Add workflow tips and common pitfall warnings
+- Keep instructions concise but actionable
+
+OUTPUT FORMAT:
+Your response must contain ONLY these two sections:
+1. "reasoning": Explain your analysis of the feedback and what needs to be improved
+2. "suggestion": Provide both the complete optimized tool information AND the improved additional instructions
+
+Do not include any other text, explanations, or keywords like TERMINATE."""
+
+class TeacherGuide(Guide):
+    """Guide that extract reward and feedback from the agent's output."""
+    def __init__(self, env: Env, config: RunConfig):
+        super().__init__()
+        self.env = env
+        self.config = config
+        
+    def get_feedback(self, task, output: SolveResult, info):   
+        """Get feedback from the agent's output."""
+        reward, messages, info = output
+        if info == "BadRequest":
+            return 0, "BadRequestError. Please adjust the tool information to the correct form."
+        if reward == 1:
+            feedback = "Correct"
+        else:
+            conversation_parts = []
+            for msg in messages:
+                msg_str = f"{msg['role']}: {msg.get('content', '')}"
+                
+                if 'tool_calls' in msg and msg['tool_calls']:
+                    tool_calls_str = []
+                    for tool_call in msg['tool_calls']:
+                        if 'function' in tool_call:
+                            func_name = tool_call['function'].get('name', '')
+                            func_args = tool_call['function'].get('arguments', '')
+                            tool_calls_str.append(f"Tool: {func_name}({func_args})")
+                    if tool_calls_str:
+                        msg_str += f" [Tool Calls: {'; '.join(tool_calls_str)}]"
+                
+                if msg['role'] == 'tool':
+                    tool_name = msg.get('name', '')
+                    tool_call_id = msg.get('tool_call_id', '')
+                    msg_str = f"tool ({tool_name}, ID: {tool_call_id}): {msg.get('content', '')}"
+                
+                conversation_parts.append(msg_str)
+            
+            feedback = "The agent failed to solve the task. Here is the conversation history: " + "\n".join(conversation_parts)
+        return reward, feedback
+        
+    def metric(self, task, output: SolveResult, info):
+        """Metric for the agent's performance."""
+        reward, messages, info = output
+        return reward
+
+def create_retail_dataset(env, num_tasks=10):
+    """Create dataset from retail environment tasks."""
+    inputs = []
+    infos = []
+    
+    for task_id in range(num_tasks):
+        inputs.append(task_id)
+        infos.append(task_id)
+    
+    return {'inputs': inputs, 'infos': infos}
+
+def main():
+    """Main function for PrioritySearch training."""
+    parser = argparse.ArgumentParser(description='Train agent using PrioritySearch algorithm')
+    
+    # Dataset parameters
+    parser.add_argument('--num_train_samples', type=int, default=2,
+                       help='Number of training samples')
+    parser.add_argument('--num_validate_samples', type=int, default=2,
+                       help='Number of validation samples')
+    parser.add_argument('--num_test_samples', type=int, default=2,
+                       help='Number of test samples')
+    
+    # Training parameters
+    parser.add_argument('--batch_size', type=int, default=2,
+                       help='Training batch size')
+    parser.add_argument('--num_batches', type=int, default=1,
+                       help='?Number of batches to use from the dataset in each iteration')
+    parser.add_argument('--num_epochs', type=int, default=5,
+                       help='Number of training epochs')
+    parser.add_argument('--num_threads', type=int, default=20,
+                       help='Number of threads for parallel processing')
+    parser.add_argument('--test_frequency', type=int, default=-1,
+                       help='How often to run evaluation (test_frequency)')
+    parser.add_argument('--log_frequency', type=int, default=1,
+                       help='How often to log results')
+    parser.add_argument('--save_frequency', type=int, default=None,
+                       help='How often to save the agent')
+    parser.add_argument('--save_path', type=str, default='checkpoints/priority_search_agent.pkl',
+                       help='Path to save the agent')
+    parser.add_argument('--num_eval_samples', type=int, default=1,
+                       help='Number of times to evaluate each input')
+    
+    # PrioritySearch-specific parameters
+    parser.add_argument('--num_candidates', type=int, default=3,
+                       help='Number of candidates to propose for exploration')
+    parser.add_argument('--num_proposals', type=int, default=1,
+                       help='Number of proposals to generate per optimizer')
+    parser.add_argument('--validate_exploration_candidates', action='store_true', default=False,
+                       help='Whether to validate the proposed parameters for exploration')
+    parser.add_argument('--use_best_candidate_to_explore', action='store_true', default=True,
+                       help='Whether to use the best candidate as part of the exploration candidates')
+    parser.add_argument('--memory_size', type=int, default=None,
+                       help='Size of the heap memory to store the candidates; if None, no limit is set')
+    parser.add_argument('--score_function', type=str, default='mean',
+                       choices=['mean', 'ucb', 'time'],
+                       help='Function to compute the score for the candidates')
+    parser.add_argument('--ucb_exploration_constant', type=float, default=1.0,
+                       help='Exploration constant for UCB score function')
+    parser.add_argument('--score_range_min', type=float, default=0.0,
+                       help='Minimum score for score range (used with UCB)')
+    parser.add_argument('--score_range_max', type=float, default=1.0,
+                       help='Maximum score for score range (used with UCB)')
+    
+    # Model parameters
+    parser.add_argument('--model', type=str, default='gemini-2.0-flash',
+                       help='Model to use for the agent')
+    parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
+                       help='Model to use for the user')
+    parser.add_argument('--project_name', type=str, default='tau-bench-priority-search',
+                       help='Name of the project')
+    parser.add_argument('--run_name', type=str, default='debug',
+                       help='Name of the run')
+    parser.add_argument('--verbose', action='store_true', default=False,
+                       help='Whether to print verbose output')
+    
+    args = parser.parse_args()
+    
+    try:
+        # Create configuration
+        config = RunConfig(
+            model_provider=provider,
+            user_model_provider=provider,
+            model=args.model,
+            user_model=args.user_model,
+            num_trials=1,
+            env="retail",
+            agent_strategy="tool-calling",
+            temperature=0.0,
+            task_split="test",
+            task_ids=list(range(max(args.num_train_samples, args.num_validate_samples, args.num_test_samples))),
+            log_dir="results",
+            max_concurrency=1,
+            seed=10,
+            shuffle=0,
+            user_strategy="llm",
+            few_shot_displays_path=None
+        )
+        
+        # Initialize environment
+        print(f"Initializing retail environment with user strategy: {config.user_strategy}")
+        env = get_env(
+            config.env,
+            user_strategy=config.user_strategy,
+            user_model=config.user_model,
+            user_provider=config.user_model_provider,
+            task_split=config.task_split,
+            task_index=0
+        )
+        
+        # Create datasets
+        print("Creating datasets...")
+        train_dataset = create_retail_dataset(env, num_tasks=args.num_train_samples)
+        validate_dataset = create_retail_dataset(env, num_tasks=args.num_validate_samples)
+        test_dataset = create_retail_dataset(env, num_tasks=args.num_test_samples)
+        
+        print(f"Training samples: {len(train_dataset['inputs'])}")
+        print(f"Validation samples: {len(validate_dataset['inputs'])}")
+        print(f"Test samples: {len(test_dataset['inputs'])}")
+        
+        # Initialize agent
+        print(f"Initializing agent with model: {config.model}")
+        agent = ToolCallingAgent(
+            tools_info=env.tools_info,
+            wiki=env.wiki,
+            model=config.model,
+            provider=config.model_provider,
+            temperature=config.temperature
+        )
+        agent.set_env(env)
+        
+        # Initialize guide, optimizer, and logger
+        guide = TeacherGuide(env, config)
+        optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
+        optimizer.objective = OBJECTIVE
+        logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name)
+        
+        # Create PrioritySearch algorithm
+        print("Creating PrioritySearch algorithm...")
+        algorithm = PrioritySearch(
+            agent=agent,
+            optimizer=optimizer,
+            logger=logger,
+            num_threads=args.num_threads
+        )
+        
+        # Set score range for UCB
+        score_range = (args.score_range_min, args.score_range_max) if args.score_function == 'ucb' else None
+        
+        # Training parameters for PrioritySearch
+        train_params = {
+            "guide": guide,
+            "train_dataset": train_dataset,
+            "validate_dataset": validate_dataset,
+            "test_dataset": test_dataset,
+            "batch_size": args.batch_size,
+            "num_batches": args.num_batches,
+            "score_range": score_range,
+            "num_epochs": args.num_epochs,
+            "num_threads": args.num_threads,
+            "verbose": args.verbose,
+            "test_frequency": args.test_frequency,
+            "num_eval_samples": args.num_eval_samples,
+            "log_frequency": args.log_frequency,
+            "save_frequency": args.save_frequency,
+            "save_path": args.save_path,
+            # PrioritySearch specific parameters
+            "num_candidates": args.num_candidates,
+            "num_proposals": args.num_proposals,
+            "validate_exploration_candidates": args.validate_exploration_candidates,
+            "use_best_candidate_to_explore": args.use_best_candidate_to_explore,
+            "memory_size": args.memory_size,
+            "score_function": args.score_function,
+            "ucb_exploration_constant": args.ucb_exploration_constant,
+        }
+        
+        # Start training
+        print("Starting training with PrioritySearch...")
+        print(f"Batch size: {args.batch_size}")
+        print(f"Number of batches: {args.num_batches}")
+        print(f"Number of epochs: {args.num_epochs}")
+        print(f"Number of threads: {args.num_threads}")
+        print(f"Number of candidates: {args.num_candidates}")
+        print(f"Number of proposals: {args.num_proposals}")
+        print(f"Score function: {args.score_function}")
+        print(f"UCB exploration constant: {args.ucb_exploration_constant}")
+        print(f"Memory size: {args.memory_size}")
+        print(f"Validate exploration candidates: {args.validate_exploration_candidates}")
+        print(f"Use best candidate to explore: {args.use_best_candidate_to_explore}")
+        
+        import time
+        start_time = time.time()
+        algorithm.train(**train_params)
+        duration = time.time() - start_time
+        
+        print(f"Training completed in {duration:.2f} seconds")
+           
+    except Exception as e:
+        print(f"Error during training: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
