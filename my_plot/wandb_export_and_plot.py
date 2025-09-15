@@ -54,7 +54,7 @@ ALGORITHMS = {
     'MinibatchwithValidation': {
         'display_name': 'MinibatchwithValidation',
         'color': '#74B9FF',  # Light blue
-        'linestyle': '-.',
+        'linestyle': '-',
         'linewidth': 2.5
     },
     
@@ -85,26 +85,24 @@ ALGORITHMS = {
     # },
     
     # LLM-based search algorithms - distinctive colors and styles
-    'llm-search-xml': {
+    'llm-search-new-version': {
         'display_name': 'LLM Search',
         'color': '#FF6B35',  # Bright orange-red
         'linestyle': '-',
         'linewidth': 3.0  # Slightly thicker for emphasis
     },
-    'llm-search-no-regressor': {
-        'display_name': 'LLM Search (no regressor)',
-        'color': '#2E86AB',  # Deep blue
-        'linestyle': '--',
-        'linewidth': 3.0
-    },
-    'llm-search-more-generation-xml': {
+    # 'llm-search-no-regressor': {
+    #     'display_name': 'LLM Search (no regressor)',
+    #     'color': '#2E86AB',  # Deep blue
+    #     'linestyle': '--',
+    #     'linewidth': 3.0
+    # },
+    'llm-search-multigen': {
         'display_name': 'LLM Search (Multi-Gen)',
-        'color': '#A23B72',  # Deep magenta
-        'linestyle': '-.',
+        'color': '#FF69B4',  # Hot pink
+        'linestyle': '-',
         'linewidth': 3.0
     },
-
-
 }
    
 def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs", 
@@ -159,10 +157,11 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
             print(f"  Warning: No 'Test score' found in run {run_name}")
             continue
             
-        # Extract relevant data
+        # Extract relevant data and calculate highest_score_so_far for this run
+        run_data_points = []
         for idx, row in history.iterrows():
             if pd.notna(row.get('Test score')):
-                all_data.append({
+                run_data_points.append({
                     'run_id': run.id,
                     'run_name': run_name,
                     'algorithm': algorithm,
@@ -170,6 +169,17 @@ def export_wandb_data(project_name: str = "tau-bench-retail-compare-search-algs"
                     'total_samples': row.get('Total samples', row.get('_step', idx) * 4),  # Estimate if not available
                     'test_score': row['Test score']
                 })
+        
+        # Sort by total_samples to ensure correct chronological order for cumulative max
+        run_data_points.sort(key=lambda x: x['total_samples'])
+        
+        # Calculate highest_score_so_far for this run
+        highest_so_far = float('-inf')
+        for data_point in run_data_points:
+            current_score = data_point['test_score']
+            highest_so_far = max(highest_so_far, current_score)
+            data_point['highest_score_so_far'] = highest_so_far
+            all_data.append(data_point)
     
     # Print run counts
     print("\n=== Run Counts by Algorithm ===")
@@ -211,15 +221,8 @@ def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100
     for algorithm in df['algorithm'].unique():
         alg_data = df[df['algorithm'] == algorithm].sort_values(['run_id', 'total_samples'])
         
-        if use_cummax:
-            # Calculate cumulative maximum for each run
-            cummax_data = []
-            for run_id in alg_data['run_id'].unique():
-                run_data = alg_data[alg_data['run_id'] == run_id].sort_values('total_samples')
-                run_data = run_data.copy()
-                run_data['cummax_score'] = run_data['test_score'].cummax()
-                cummax_data.append(run_data)
-            alg_data = pd.concat(cummax_data, ignore_index=True)
+        # Note: highest_score_so_far is already calculated in export_wandb_data
+        # No need to recalculate cumulative maximum here
         
         for i in range(len(intervals) - 1):
             interval_start = intervals[i]
@@ -236,7 +239,15 @@ def calculate_statistics_by_intervals(df: pd.DataFrame, interval_size: int = 100
                 continue
             
             if use_cummax:
-                scores = interval_data['cummax_score'].values
+                # For cumulative maximum, we need to take the maximum highest_score_so_far 
+                # for each run within this interval, then average across runs
+                run_max_scores = []
+                for run_id in interval_data['run_id'].unique():
+                    run_interval_data = interval_data[interval_data['run_id'] == run_id]
+                    # Take the maximum highest_score_so_far for this run in this interval
+                    max_score_for_run = run_interval_data['highest_score_so_far'].max()
+                    run_max_scores.append(max_score_for_run)
+                scores = np.array(run_max_scores)
             else:
                 scores = interval_data['test_score'].values
             n_points = len(scores)
@@ -334,7 +345,7 @@ def create_publication_plot_with_intervals(stats_df: pd.DataFrame, output_file: 
     
     # Set fixed y-axis range
     y_min_plot = 0.35
-    y_max_plot = 0.5
+    y_max_plot = 0.55
     
     for algorithm in ALGORITHMS.keys():
         alg_data = stats_df[stats_df['algorithm'] == algorithm].sort_values('interval_center')
@@ -422,7 +433,7 @@ def create_max_score_plot_with_intervals(stats_df: pd.DataFrame, output_file: st
     
     # Set fixed y-axis range
     y_min_plot = 0.35
-    y_max_plot = 0.52  # Increased to accommodate 0.5 scores
+    y_max_plot = 0.55  # Increased to accommodate 0.5 scores
     
     for algorithm in ALGORITHMS.keys():
         alg_data = stats_df[stats_df['algorithm'] == algorithm].sort_values('interval_center')

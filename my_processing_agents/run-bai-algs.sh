@@ -63,8 +63,9 @@ python my_processing_agents/run-score-prediction.py  --num_epochs 50 --run_name 
 # python run-score-prediction.py  --num_epochs 50 --run_name "Embedding_Regression"
 # python run-score-prediction.py  --num_epochs 20 --run_name "Embedding_Regression"
 
-python my_processing_agents/run-score-prediction.py  --num_epochs 200 --run_name "score_prediction_half" --bai_algo "score_prediction_half" --validate_batch_size 2 --run_name "score_prediction_half-small-batch"
+python my_processing_agents/run-score-prediction.py  --num_epochs 200  --bai_algo "score_prediction_half" --validate_batch_size 2 --run_name "score_prediction_half-small-batch"
 
+python my_processing_agents/run-score-prediction.py  --num_epochs 20 --run_name "score_prediction_half" --bai_algo "score_prediction_half" --validate_batch_size 20 --run_name "score_prediction_new-regressor"
 
 # debug for projected embedding regression
 
@@ -111,7 +112,7 @@ done
 # 2. Classical LLM search. At each epoch, generate 4*3 candidates. Evaluate those 4 with the selected arm. Compare with 1.
 python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-more-generation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
 # 3. select arms by mean scores. Compare with 1.
-python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5  --num_multiple_generations 1 --do_validation 
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-no-regressor" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5  --num_multiple_generations 1 --do_validation 
 # 4. Run 1 without validation. Compare with 1.
 python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 4 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-without-validation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1  
 
@@ -136,5 +137,49 @@ done
 
 # Sept 2 large scale experiement
 for i in {1..3}; do
-    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 50 --train_batch_size 2  --run_name "llm-search-large-scale" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 5 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
 done
+
+# Sept 4, 2025
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+done
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-more-generation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-no-regressor" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10  --num_multiple_generations 1 --do_validation 
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 25 --log_frequency 1 --num_epochs 125 --train_batch_size 2  --run_name "llm-search-without-validation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1  
+
+# Sept 5, 2025
+# debug for large number of candidates
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 100 --log_frequency 1 --num_epochs 10 --train_batch_size 2  --run_name "llm-search-debug-regressor" --num_test_samples 2 --num_train_samples 50 --num_validate_samples 2 --num_generation_steps 3 --validate_batch_size 2 --num_eval_samples 1 --select_arm_by_predicted_score --num_multiple_generations 20  
+
+# Sept 7, 2025 debug for new regressor
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 100 --log_frequency 1 --num_epochs 10 --train_batch_size 2  --run_name "debug-new-regressor" --num_test_samples 2 --num_train_samples 2 --num_validate_samples 2 --num_generation_steps 4 --validate_batch_size 2 --num_eval_samples 1 --select_arm_by_predicted_score --num_multiple_generations 20
+
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-more-generation" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
+done
+
+# Sept 8, 2025. Run control experiment with the new regressor. Now the original algorithm uses the new regressor to predict scores.
+for i in {1..3}; do
+    python my_processing_agents/run-score-prediction.py  --num_epochs 20  --bai_algo "score_prediction_half" --validate_batch_size 20 --run_name "score_prediction_new-embedding-regressor-debug"
+done
+
+for i in {1..2}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-new-version" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+done
+# Sept 9, 2025 night
+for i in {1..3}; do
+    python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-multigen" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 3 --do_validation
+done
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-new-version" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 --do_validation 
+
+# Sept 11, 2025
+# debug for the embedding regressor
+python my_processing_agents/run-score-prediction.py  --num_epochs 10  --bai_algo "score_prediction_half" --validate_batch_size 20 --run_name "embedding-regressor-debug"
+
+python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-embedding-regressor" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 

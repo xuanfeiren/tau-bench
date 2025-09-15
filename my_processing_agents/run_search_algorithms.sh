@@ -38,3 +38,29 @@ python my_processing_agents/optimize_tau_agent.py \
     --score_range_max 1.0 \
     --project_name "tau-bench-10-tasks-10-evals" \
     --run_name "priority_search" 
+
+# Sep 14, 2025 
+# A better config in my mind
+for i in {1..3}; do
+    python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 5 \
+        --num_epochs 50 \
+        --num_threads 20 \
+        --test_frequency 2 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 2 \
+        --num_proposals 3 \
+        --use_best_candidate_to_explore \
+        --memory_size 1000 \
+        --score_function "mean" \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "priority_search-embedding-regressor" \
+        --use_regressor
+done

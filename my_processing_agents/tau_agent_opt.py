@@ -224,6 +224,8 @@ def main():
                        help='Model to use for the agent')
     parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the user')
+    parser.add_argument('--project_name', type=str, default='tau-bench-retail-compare-search-algs',
+                       help='Name of the project')
     parser.add_argument('--run_name', type=str, default='debug',
                        help='Name of the run')
     args = parser.parse_args()
@@ -285,7 +287,7 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project="tau-bench-retail-compare-search-algs", verbose=True, name=args.run_name)
+        logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name)
         
         # Create algorithm based on selection
         print(f"Creating {args.algorithm_name}...")
