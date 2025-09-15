@@ -20,6 +20,7 @@ from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
+from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
 from opto.features.priority_search.priority_search_modified import PrioritySearch
 from opto.trainer.guide import Guide
 ##TODO: change to ToolCallingAgent_v2
@@ -137,19 +138,19 @@ def main():
     parser = argparse.ArgumentParser(description='Train agent using PrioritySearch algorithm')
     
     # Dataset parameters
-    parser.add_argument('--num_train_samples', type=int, default=2,
+    parser.add_argument('--num_train_samples', type=int, default=10,
                        help='Number of training samples')
-    parser.add_argument('--num_validate_samples', type=int, default=2,
+    parser.add_argument('--num_validate_samples', type=int, default=1,
                        help='Number of validation samples')
-    parser.add_argument('--num_test_samples', type=int, default=2,
+    parser.add_argument('--num_test_samples', type=int, default=1,
                        help='Number of test samples')
     
     # Training parameters
     parser.add_argument('--batch_size', type=int, default=2,
                        help='Training batch size')
-    parser.add_argument('--num_batches', type=int, default=1,
-                       help='?Number of batches to use from the dataset in each iteration')
-    parser.add_argument('--num_epochs', type=int, default=5,
+    parser.add_argument('--num_batches', type=int, default=5,
+                       help='Number of batches to use from the dataset in each iteration')
+    parser.add_argument('--num_epochs', type=int, default=2,
                        help='Number of training epochs')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
@@ -165,9 +166,9 @@ def main():
                        help='Number of times to evaluate each input')
     
     # PrioritySearch-specific parameters
-    parser.add_argument('--num_candidates', type=int, default=3,
+    parser.add_argument('--num_candidates', type=int, default=2,
                        help='Number of candidates to propose for exploration')
-    parser.add_argument('--num_proposals', type=int, default=1,
+    parser.add_argument('--num_proposals', type=int, default=2,
                        help='Number of proposals to generate per optimizer')
     parser.add_argument('--validate_exploration_candidates', action='store_true', default=False,
                        help='Whether to validate the proposed parameters for exploration')
@@ -196,6 +197,8 @@ def main():
                        help='Name of the run')
     parser.add_argument('--verbose', action='store_true', default=False,
                        help='Whether to print verbose output')
+    parser.add_argument('--use_regressor', action='store_true', default=False,
+                       help='Whether to use the regressor')
     
     args = parser.parse_args()
     
@@ -256,11 +259,48 @@ def main():
         guide = TeacherGuide(env, config)
         optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
-        logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name)
+        
+        # Prepare configuration for logging (excluding project_name and run_name)
+        config_dict = {
+            'num_train_samples': args.num_train_samples,
+            'num_validate_samples': args.num_validate_samples,
+            'num_test_samples': args.num_test_samples,
+            'batch_size': args.batch_size,
+            'num_batches': args.num_batches,
+            'num_epochs': args.num_epochs,
+            'num_threads': args.num_threads,
+            'test_frequency': args.test_frequency,
+            'log_frequency': args.log_frequency,
+            'save_frequency': args.save_frequency,
+            'save_path': args.save_path,
+            'num_eval_samples': args.num_eval_samples,
+            'num_candidates': args.num_candidates,
+            'num_proposals': args.num_proposals,
+            'validate_exploration_candidates': args.validate_exploration_candidates,
+            'use_best_candidate_to_explore': args.use_best_candidate_to_explore,
+            'memory_size': args.memory_size,
+            'score_function': args.score_function,
+            'ucb_exploration_constant': args.ucb_exploration_constant,
+            'score_range_min': args.score_range_min,
+            'score_range_max': args.score_range_max,
+            'model': args.model,
+            'user_model': args.user_model,
+            'verbose': args.verbose
+        }
+        
+        logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name, config=config_dict)
         
         # Create PrioritySearch algorithm
         print("Creating PrioritySearch algorithm...")
-        algorithm = PrioritySearch(
+        if args.use_regressor:
+            algorithm = PrioritySearch_with_Regressor(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
+        else:
+            algorithm = PrioritySearch(
             agent=agent,
             optimizer=optimizer,
             logger=logger,
