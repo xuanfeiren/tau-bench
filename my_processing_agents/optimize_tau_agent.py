@@ -23,7 +23,6 @@ from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
 from opto.features.priority_search.priority_search import PrioritySearch
 from opto.trainer.guide import Guide
-##TODO: change to ToolCallingAgent_v2
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
 # Import the agent from separate module to avoid pickle issues
 # from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
@@ -197,6 +196,8 @@ def main():
                        help='Name of the run')
     parser.add_argument('--verbose', action='store_true', default=False,
                        help='Whether to print verbose output')
+    parser.add_argument('--short_term_memory_duration', type=int, default=0,
+                       help='Duration of the short-term memory')
     parser.add_argument('--use_regressor', action='store_true', default=False,
                        help='Whether to use the regressor')
     
@@ -268,6 +269,7 @@ def main():
             'batch_size': args.batch_size,
             'num_batches': args.num_batches,
             'num_epochs': args.num_epochs,
+            'short_term_memory_duration': args.short_term_memory_duration,
             'num_threads': args.num_threads,
             'test_frequency': args.test_frequency,
             'log_frequency': args.log_frequency,
@@ -320,6 +322,7 @@ def main():
             "num_batches": args.num_batches,
             "score_range": score_range,
             "num_epochs": args.num_epochs,
+            "short_term_memory_duration": args.short_term_memory_duration,
             "num_threads": args.num_threads,
             "verbose": args.verbose,
             "test_frequency": args.test_frequency,
