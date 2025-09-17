@@ -6,7 +6,6 @@ from tau_bench.retry_utils import auto_retry_with_exponential_backoff
 
 import opto 
 from opto import trace
-from opto.optimizers import OptoPrime 
 from opto.trace.nodes import GRAPH
 from opto.trace.modules import Module 
 
@@ -139,7 +138,7 @@ def main():
     # Dataset parameters
     parser.add_argument('--num_train_samples', type=int, default=10,
                        help='Number of training samples')
-    parser.add_argument('--num_validate_samples', type=int, default=1,
+    parser.add_argument('--num_validate_samples', type=int, default=10,
                        help='Number of validation samples')
     parser.add_argument('--num_test_samples', type=int, default=1,
                        help='Number of test samples')
@@ -200,6 +199,8 @@ def main():
                        help='Duration of the short-term memory')
     parser.add_argument('--use_regressor', action='store_true', default=False,
                        help='Whether to use the regressor')
+    parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
+                       help='Optimizer to use')
     
     args = parser.parse_args()
     
@@ -258,7 +259,12 @@ def main():
         
         # Initialize guide, optimizer, and logger
         guide = TeacherGuide(env, config)
-        optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
+        if args.optoprime_version == 'v1':
+            from opto.optimizers import OptoPrime
+            optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
+        else:
+            from opto.optimizers import OptoPrimeV2
+            optimizer = OptoPrimeV2(agent.parameters(), max_tokens=8000)
         optimizer.objective = OBJECTIVE
         
         # Prepare configuration for logging (excluding project_name and run_name)
@@ -327,6 +333,7 @@ def main():
             "verbose": args.verbose,
             "test_frequency": args.test_frequency,
             "num_eval_samples": args.num_eval_samples,
+            "num_test_samples": args.num_eval_samples,
             "log_frequency": args.log_frequency,
             "save_frequency": args.save_frequency,
             "save_path": args.save_path,
