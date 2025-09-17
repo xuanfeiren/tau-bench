@@ -146,9 +146,9 @@ def main():
     # Training parameters
     parser.add_argument('--batch_size', type=int, default=2,
                        help='Training batch size')
-    parser.add_argument('--num_batches', type=int, default=5,
+    parser.add_argument('--num_batches', type=int, default=1,
                        help='Number of batches to use from the dataset in each iteration')
-    parser.add_argument('--num_epochs', type=int, default=2,
+    parser.add_argument('--num_epochs', type=int, default=20,
                        help='Number of training epochs')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
@@ -166,11 +166,11 @@ def main():
     # PrioritySearch-specific parameters
     parser.add_argument('--num_candidates', type=int, default=2,
                        help='Number of candidates to propose for exploration')
-    parser.add_argument('--num_proposals', type=int, default=2,
+    parser.add_argument('--num_proposals', type=int, default=1,
                        help='Number of proposals to generate per optimizer')
     parser.add_argument('--validate_exploration_candidates', action='store_true', default=False,
                        help='Whether to validate the proposed parameters for exploration')
-    parser.add_argument('--use_best_candidate_to_explore', action='store_true', default=True,
+    parser.add_argument('--use_best_candidate_to_explore', action='store_true', default=False,
                        help='Whether to use the best candidate as part of the exploration candidates')
     parser.add_argument('--memory_size', type=int, default=None,
                        help='Size of the heap memory to store the candidates; if None, no limit is set')
@@ -195,7 +195,7 @@ def main():
                        help='Name of the run')
     parser.add_argument('--verbose', action='store_true', default=False,
                        help='Whether to print verbose output')
-    parser.add_argument('--short_term_memory_duration', type=int, default=0,
+    parser.add_argument('--short_term_memory_duration', type=int, default=2,
                        help='Duration of the short-term memory')
     parser.add_argument('--use_regressor', action='store_true', default=False,
                        help='Whether to use the regressor')

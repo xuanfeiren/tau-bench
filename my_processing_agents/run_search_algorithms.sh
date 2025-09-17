@@ -133,7 +133,6 @@ for i in {1..3}; do
         --num_candidates 5 \
         --num_proposals 1 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -156,7 +155,6 @@ for i in {1..3}; do
         --num_candidates 5 \
         --num_proposals 1 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -180,7 +178,6 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_candidates 1 \
         --num_proposals 10 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -188,3 +185,28 @@ python my_processing_agents/optimize_tau_agent.py \
         --run_name "debugoptoprimev2" \
         --use_regressor\
         --optoprime_version v2
+# Try on 50 tasks. Aim for the highest score.
+for i in {1..3}; do
+    python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 50 \
+        --num_test_samples 50 \
+        --num_validate_samples 50 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_epochs 40 \
+        --num_threads 20 \
+        --short_term_memory_duration 4 \
+        --test_frequency 4 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --use_best_candidate_to_explore \
+        --score_function "mean" \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "PrioritySearch-with-Regressor-concentrate" \
+        --use_regressor \
+        --optoprime_version v2
+done
