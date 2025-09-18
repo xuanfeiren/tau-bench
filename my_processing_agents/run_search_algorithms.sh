@@ -34,7 +34,7 @@ python my_processing_agents/optimize_tau_agent.py \
     --num_candidates 10 \
     --num_proposals 1 \
     --use_best_candidate_to_explore \
-    --memory_size 1000 \
+    --long_term_memory_size 1000 \
     --score_function mean \
     --score_range_min 0.0 \
     --score_range_max 1.0 \
@@ -52,14 +52,14 @@ for i in {1..3}; do
         --num_batches 5 \
         --num_epochs 20 \
         --num_threads 20 \
-        --short_term_memory_duration 2 \
+        --memory_update_frequency 2 \
         --test_frequency 4 \
         --log_frequency 1 \
         --num_eval_samples 1 \
         --num_candidates 2 \
         --num_proposals 1 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
+        --long_term_memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -78,14 +78,14 @@ for i in {1..3}; do
         --num_batches 1 \
         --num_epochs 1 \
         --num_threads 20 \
-        --short_term_memory_duration 0 \
+        --memory_update_frequency 0 \
         --test_frequency -1 \
         --log_frequency 1 \
         --num_eval_samples 1 \
         --num_candidates 2 \
         --num_proposals 3 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
+        --long_term_memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -101,14 +101,14 @@ for i in {1..3}; do
         --num_batches 5 \
         --num_epochs 20 \
         --num_threads 20 \
-        --short_term_memory_duration 0 \
+        --memory_update_frequency 0 \
         --test_frequency 4 \
         --log_frequency 1 \
         --num_eval_samples 10 \
         --num_candidates 2 \
         --num_proposals 3 \
         --use_best_candidate_to_explore \
-        --memory_size 1000 \
+        --long_term_memory_size 1000 \
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
@@ -126,7 +126,7 @@ for i in {1..3}; do
         --num_batches 2 \
         --num_epochs 40 \
         --num_threads 20 \
-        --short_term_memory_duration 4 \
+        --memory_update_frequency 4 \
         --test_frequency 4 \
         --log_frequency 1 \
         --num_eval_samples 10 \
@@ -148,7 +148,7 @@ for i in {1..3}; do
         --num_batches 2 \
         --num_epochs 40 \
         --num_threads 20 \
-        --short_term_memory_duration 4 \
+        --memory_update_frequency 4 \
         --test_frequency 4 \
         --log_frequency 1 \
         --num_eval_samples 10 \
@@ -171,7 +171,7 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_batches 1 \
         --num_epochs 3 \
         --num_threads 20 \
-        --short_term_memory_duration 4 \
+        --memory_update_frequency 4 \
         --test_frequency -1 \
         --log_frequency 1 \
         --num_eval_samples 1 \
@@ -195,7 +195,7 @@ for i in {1..3}; do
         --num_batches 2 \
         --num_epochs 40 \
         --num_threads 20 \
-        --short_term_memory_duration 4 \
+        --memory_update_frequency 4 \
         --test_frequency 4 \
         --log_frequency 1 \
         --num_eval_samples 10 \
@@ -205,8 +205,78 @@ for i in {1..3}; do
         --score_function "mean" \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
-        --project_name "tau-bench-10-tasks-10-evals" \
+        --project_name "tau-bench-retail-compare-search-algs" \
         --run_name "PrioritySearch-with-Regressor-concentrate" \
         --use_regressor \
         --optoprime_version v2
 done
+
+# Sep 17, 2025. All large experiments crashed
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 5 \
+        --num_epochs 40 \
+        --num_threads 20 \
+        --memory_update_frequency 4 \
+        --test_frequency 4 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 1 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "PrioritySearch-with-Regressor-small" \
+        --use_regressor \
+        --optoprime_version v2
+
+# Only long-term memory, debug
+for i in {1..3} ; do
+    python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 2 \
+            --num_epochs 100 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --test_frequency 4 \
+            --log_frequency 1 \
+            --num_eval_samples 10 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "tau-bench-10-tasks-10-evals" \
+            --run_name "try" \
+            --use_regressor \
+            --optoprime_version v2
+done
+
+for i in {1..3} ; do
+    python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 1 \
+            --num_epochs 100 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --test_frequency 4 \
+            --log_frequency 1 \
+            --num_eval_samples 10 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "tau-bench-10-tasks-10-evals" \
+            --run_name "try-no-enforce" \
+            --optoprime_version v2
+done
+
