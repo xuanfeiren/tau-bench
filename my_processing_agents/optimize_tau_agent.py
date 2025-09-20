@@ -201,7 +201,8 @@ def main():
                        help='Whether to use the regressor')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
                        help='Optimizer to use')
-    
+    parser.add_argument('--use_validation', action='store_true', default=False,
+                       help='Whether to use validation, only matters in use_regressor version')
     args = parser.parse_args()
     
     try:
@@ -293,7 +294,8 @@ def main():
             'score_range_max': args.score_range_max,
             'model': args.model,
             'user_model': args.user_model,
-            'verbose': args.verbose
+            'verbose': args.verbose,
+            'use_validation': args.use_validation,
         }
         
         logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name, config=config_dict)
@@ -345,6 +347,7 @@ def main():
             "memory_size": args.memory_size,
             "score_function": args.score_function,
             "ucb_exploration_constant": args.ucb_exploration_constant,
+            "use_validation": args.use_validation,
         }
         
         # Start training
@@ -360,7 +363,7 @@ def main():
         print(f"Memory size: {args.memory_size}")
         print(f"Validate exploration candidates: {args.validate_exploration_candidates}")
         print(f"Use best candidate to explore: {args.use_best_candidate_to_explore}")
-        
+        print(f"Use validation: {args.use_validation}")
         import time
         start_time = time.time()
         algorithm.train(**train_params)
