@@ -148,8 +148,10 @@ def main():
                        help='Training batch size')
     parser.add_argument('--num_batches', type=int, default=1,
                        help='Number of batches to use from the dataset in each iteration')
-    parser.add_argument('--num_epochs', type=int, default=20,
+    parser.add_argument('--num_epochs', type=int, default=None,
                        help='Number of training epochs')
+    parser.add_argument('--num_steps', type=int, default=5,
+                       help='Number of training steps')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
     parser.add_argument('--test_frequency', type=int, default=-1,
@@ -276,6 +278,7 @@ def main():
             'batch_size': args.batch_size,
             'num_batches': args.num_batches,
             'num_epochs': args.num_epochs,
+            'num_steps': args.num_steps,
             'memory_update_frequency': args.memory_update_frequency,
             'num_threads': args.num_threads,
             'test_frequency': args.test_frequency,
@@ -330,6 +333,7 @@ def main():
             "num_batches": args.num_batches,
             "score_range": score_range,
             "num_epochs": args.num_epochs,
+            "num_steps": args.num_steps,
             "memory_update_frequency": args.memory_update_frequency,
             "num_threads": args.num_threads,
             "verbose": args.verbose,
@@ -355,6 +359,7 @@ def main():
         print(f"Batch size: {args.batch_size}")
         print(f"Number of batches: {args.num_batches}")
         print(f"Number of epochs: {args.num_epochs}")
+        print(f"Number of steps: {args.num_steps}")
         print(f"Number of threads: {args.num_threads}")
         print(f"Number of candidates: {args.num_candidates}")
         print(f"Number of proposals: {args.num_proposals}")
