@@ -479,3 +479,20 @@ class ToolCallingAgent_v2(Agent):
     def set_env(self, env):
         """Set the environment for this agent."""
         self._env = env
+
+import random
+class DummyToolCallingAgent(ToolCallingAgent_v2):
+    """Dummy agent that does not call LLM"""
+    @trace.bundle()
+    def solve(self, additional_instructions, env: Env, task_index: Optional[int] = None, max_num_steps: int = 30):
+        """Agent solves the task with the given tools_info."""
+        # return a random reward between 0 and 1
+        reward = random.random()
+        # construct a dummy conversation for messages
+        messages = [
+            {"role": "system", "content": self.wiki},
+            {"role": "system", "content": additional_instructions},
+            {"role": "user", "content": "This is a dummy conversation"},
+        ]
+        return reward, messages, "info"
+    
