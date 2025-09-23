@@ -23,8 +23,8 @@ from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
 from opto.features.priority_search.dummy_ps import DummyPrioritySearch as PrioritySearch
 from opto.trainer.guide import Guide
-# from agents.tool_calling_agent import DummyToolCallingAgent as ToolCallingAgent
-from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
+from agents.tool_calling_agent import DummyToolCallingAgent as ToolCallingAgent
+# from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
 # Import the agent from separate module to avoid pickle issues
 # from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
 
