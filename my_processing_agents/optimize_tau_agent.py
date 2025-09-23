@@ -8,6 +8,7 @@ import opto
 from opto import trace
 from opto.trace.nodes import GRAPH
 from opto.trace.modules import Module 
+from typing import Union, Optional
 
 # Copyright Sierra
 
@@ -154,7 +155,7 @@ def main():
                        help='Number of training steps')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
-    parser.add_argument('--test_frequency', type=int, default=-1,
+    parser.add_argument('--test_frequency', type=int, default=None,
                        help='How often to run evaluation (test_frequency)')
     parser.add_argument('--log_frequency', type=int, default=1,
                        help='How often to log results')
@@ -201,6 +202,10 @@ def main():
                        help='Duration of the short-term memory')
     parser.add_argument('--use_regressor', action='store_true', default=False,
                        help='Whether to use the regressor')
+    parser.add_argument('--regressor_type', type=str, default='logistic', choices=['logistic', 'linear', 'linear_ucb'],
+                       help='Type of the regressor')
+    parser.add_argument('--regressor_alpha', type=float, default=1.0,
+                       help='UCB exploration parameter for the regressor')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
                        help='Optimizer to use')
     parser.add_argument('--use_validation', action='store_true', default=False,
@@ -352,6 +357,8 @@ def main():
             "score_function": args.score_function,
             "ucb_exploration_constant": args.ucb_exploration_constant,
             "use_validation": args.use_validation,
+            "regressor_type": args.regressor_type,
+            "regressor_alpha": args.regressor_alpha,
         }
         
         # Start training
@@ -369,6 +376,8 @@ def main():
         print(f"Validate exploration candidates: {args.validate_exploration_candidates}")
         print(f"Use best candidate to explore: {args.use_best_candidate_to_explore}")
         print(f"Use validation: {args.use_validation}")
+        print(f"Regressor type: {args.regressor_type}")
+        print(f"Regressor alpha: {args.regressor_alpha}")
         import time
         start_time = time.time()
         algorithm.train(**train_params)
