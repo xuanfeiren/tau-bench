@@ -174,6 +174,8 @@ def main():
                        help='Number of proposals to generate per optimizer')
     parser.add_argument('--validate_exploration_candidates', action='store_true', default=False,
                        help='Whether to validate the proposed parameters for exploration')
+    parser.add_argument('--long_term_memory_size', type=int, default=None,
+                       help='Size of the long-term memory to store the candidates; if None, no limit is set')
     parser.add_argument('--use_best_candidate_to_explore', action='store_true', default=False,
                        help='Whether to use the best candidate as part of the exploration candidates')
     parser.add_argument('--memory_size', type=int, default=None,
@@ -285,6 +287,7 @@ def main():
             'num_batches': args.num_batches,
             'num_epochs': args.num_epochs,
             'num_steps': args.num_steps,
+            'long_term_memory_size': args.long_term_memory_size,
             'memory_update_frequency': args.memory_update_frequency,
             'num_threads': args.num_threads,
             'test_frequency': args.test_frequency,
@@ -340,6 +343,7 @@ def main():
             "score_range": score_range,
             "num_epochs": args.num_epochs,
             "num_steps": args.num_steps,
+            "long_term_memory_size": args.long_term_memory_size,
             "memory_update_frequency": args.memory_update_frequency,
             "num_threads": args.num_threads,
             "verbose": args.verbose,
@@ -373,6 +377,7 @@ def main():
         print(f"Number of proposals: {args.num_proposals}")
         print(f"Score function: {args.score_function}")
         print(f"UCB exploration constant: {args.ucb_exploration_constant}")
+        print(f"Long-term memory size: {args.long_term_memory_size}")
         print(f"Memory size: {args.memory_size}")
         print(f"Validate exploration candidates: {args.validate_exploration_candidates}")
         print(f"Use best candidate to explore: {args.use_best_candidate_to_explore}")
