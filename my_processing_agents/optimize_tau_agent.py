@@ -204,8 +204,10 @@ def main():
                        help='Duration of the short-term memory')
     parser.add_argument('--use_regressor', action='store_true', default=False,
                        help='Whether to use the regressor')
-    parser.add_argument('--regressor_type', type=str, default='logistic', choices=['logistic', 'linear', 'linear_ucb'],
+    parser.add_argument('--regressor_type', type=str, default='logistic', choices=['logistic', 'linear', 'linear_ucb', 'llm'],
                        help='Type of the regressor')
+    parser.add_argument('--regressor_model_name', type=str, default='gemini/gemini-2.0-flash',
+                       help='Model name for the regressor')
     parser.add_argument('--regressor_alpha', type=float, default=1.0,
                        help='UCB exploration parameter for the regressor')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
