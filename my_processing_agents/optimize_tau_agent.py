@@ -180,6 +180,8 @@ def main():
     parser.add_argument('--score_function', type=str, default='mean',
                        choices=['mean', 'ucb', 'time'],
                        help='Function to compute the score for the candidates')
+    parser.add_argument('--long_term_memory_size', type=int, default=None,
+                       help='Size of the long-term memory to store the candidates; if None, no limit is set')
     parser.add_argument('--ucb_exploration_constant', type=float, default=1.0,
                        help='Exploration constant for UCB score function')
     parser.add_argument('--score_range_min', type=float, default=0.0,
@@ -339,6 +341,7 @@ def main():
             "score_range": score_range,
             "num_epochs": args.num_epochs,
             "num_steps": args.num_steps,
+            "long_term_memory_size": args.long_term_memory_size,
             "memory_update_frequency": args.memory_update_frequency,
             "num_threads": args.num_threads,
             "verbose": args.verbose,
