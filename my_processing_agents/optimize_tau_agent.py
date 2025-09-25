@@ -210,6 +210,8 @@ def main():
                        help='Model name for the regressor')
     parser.add_argument('--regressor_alpha', type=float, default=1.0,
                        help='UCB exploration parameter for the regressor')
+    parser.add_argument('--regressor_transformation_exploration_factor', type=float, default=0.0,
+                       help='Transformation exploration factor for the regressor')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
                        help='Optimizer to use')
     parser.add_argument('--use_validation', action='store_true', default=False,
@@ -364,6 +366,7 @@ def main():
             "use_validation": args.use_validation,
             "regressor_type": args.regressor_type,
             "regressor_alpha": args.regressor_alpha,
+            "regressor_transformation_exploration_factor": args.regressor_transformation_exploration_factor,
         }
         
         # Start training
