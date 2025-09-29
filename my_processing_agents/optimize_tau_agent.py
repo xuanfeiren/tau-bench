@@ -208,7 +208,7 @@ def main():
                        help='Type of the regressor')
     parser.add_argument('--regressor_model_name', type=str, default='gemini/gemini-2.0-flash',
                        help='Model name for the regressor')
-    parser.add_argument('--regressor_alpha', type=float, default=1.0,
+    parser.add_argument('--regressor_alpha', type=float, default=0.1,
                        help='UCB exploration parameter for the regressor')
     parser.add_argument('--regressor_transformation_exploration_factor', type=float, default=0.0,
                        help='Transformation exploration factor for the regressor')

@@ -225,7 +225,7 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_eval_samples 10 \
         --num_candidates 1 \
         --num_proposals 1 \
-        --score_range_min 0.0 \
+        --score_range_mitin 0.0 \
         --score_range_max 1.0 \
         --project_name "tau-bench-10-tasks-10-evals" \
         --run_name "PrioritySearch-with-Regressor-small" \
@@ -263,7 +263,7 @@ for i in {1..3} ; do
             --num_validate_samples 10 \
             --num_test_samples 10 \
             --batch_size 2 \
-            --num_batches 1 \
+            --num_batches 2 \
             --num_epochs 100 \
             --num_threads 20 \
             --memory_update_frequency 0 \
@@ -276,7 +276,120 @@ for i in {1..3} ; do
             --score_range_min 0.0 \
             --score_range_max 1.0 \
             --project_name "tau-bench-10-tasks-10-evals" \
-            --run_name "try-no-enforce" \
+            --run_name "try" \
+            --use_regressor \
             --optoprime_version v2
 done
+# debug for linear regressor 
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 5\
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --log_frequency 1 \
+        --num_eval_samples 1 \
+        --num_candidates 2 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "debug" \
+        --run_name "debug-LinUCB" \
+        --use_regressor \
+        --regressor_type linear_ucb \
+        --optoprime_version v2
+# debug for llm regressor
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 5 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --log_frequency 1 \
+        --num_eval_samples 1 \
+        --num_candidates 2 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "debug" \
+        --run_name "debug-LLM-regressor" \
+        --use_regressor \
+        --regressor_type llm \
+        --optoprime_version v2
 
+# New regressor 
+for i in {1..3}; do
+    python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 2 \
+            --num_steps 50 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --test_frequency 5 \
+            --log_frequency 1 \
+            --num_eval_samples 10 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "tau-bench-10-tasks-10-evals" \
+            --run_name "PS-Linear-regressor-Sep23-12am" \
+            --use_regressor \
+            --regressor_type linear \
+            --optoprime_version v2
+    python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 2 \
+            --num_steps 50 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --test_frequency 5 \
+            --log_frequency 1 \
+            --num_eval_samples 10 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "tau-bench-10-tasks-10-evals" \
+            --run_name "PS-Linear-UCB-regressor-Sep23-12am" \
+            --use_regressor \
+            --regressor_type linear_ucb \
+            --optoprime_version v2
+done
+# debug linucb
+python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 2 \
+            --num_steps 50 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --log_frequency 1 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "debug" \
+            --run_name "linucb-debug" \
+            --use_regressor \
+            --regressor_type linear_ucb \
+            --optoprime_version v2
