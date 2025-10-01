@@ -210,8 +210,12 @@ def main():
                        help='Model name for the regressor')
     parser.add_argument('--regressor_alpha', type=float, default=0.1,
                        help='UCB exploration parameter for the regressor')
+    parser.add_argument('--regressor_regularization_strength', type=float, default=0.0001,
+                       help='Regularization strength for the regressor')
     parser.add_argument('--regressor_transformation_exploration_factor', type=float, default=0.0,
                        help='Transformation exploration factor for the regressor')
+    parser.add_argument('--regressor_projection_dim', type=int, default=None,
+                       help='Projection dimension for the regressor')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
                        help='Optimizer to use')
     parser.add_argument('--use_validation', action='store_true', default=False,
@@ -367,6 +371,8 @@ def main():
             "regressor_type": args.regressor_type,
             "regressor_alpha": args.regressor_alpha,
             "regressor_transformation_exploration_factor": args.regressor_transformation_exploration_factor,
+            "regressor_projection_dim": args.regressor_projection_dim,
+            "regressor_regularization_strength": args.regressor_regularization_strength,
         }
         
         # Start training
@@ -386,6 +392,7 @@ def main():
         print(f"Use validation: {args.use_validation}")
         print(f"Regressor type: {args.regressor_type}")
         print(f"Regressor alpha: {args.regressor_alpha}")
+        print(f"Regressor regularization strength: {args.regressor_regularization_strength}")
         import time
         start_time = time.time()
         algorithm.train(**train_params)
