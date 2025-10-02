@@ -393,3 +393,171 @@ python my_processing_agents/optimize_tau_agent.py \
             --use_regressor \
             --regressor_type linear_ucb \
             --optoprime_version v2
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 50 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_transformation_exploration_factor 0.0 \
+        --regressor_projection_dim 50 \
+        --run_name "PS-Linear-regressor-Sep30-t_0.0-d_50-debug" \
+        --use_regressor \
+        --regressor_type linear \
+        --optoprime_version v2
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 101 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_projection_dim 20 \
+        --regressor_regularization_strength 0.01 \
+        --run_name "PS-Logistic-regressor-Sep30-d_20-debug" \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2
+# running Sep 30 afternoon
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 51 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --test_frequency 5 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_regularization_strength 0.0001 \
+        --run_name "PS-Logistic-regressor-Sep30" \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2
+# debug linucb
+python my_processing_agents/optimize_tau_agent.py \
+            --num_train_samples 10 \
+            --num_validate_samples 10 \
+            --num_test_samples 10 \
+            --batch_size 2 \
+            --num_batches 2 \
+            --num_steps 31 \
+            --num_threads 20 \
+            --memory_update_frequency 0 \
+            --use_best_candidate_to_explore \
+            --log_frequency 1 \
+            --num_candidates 5 \
+            --num_proposals 1 \
+            --score_range_min 0.0 \
+            --score_range_max 1.0 \
+            --project_name "debug" \
+            --run_name "linucb-debug" \
+            --regressor_regularization_strength 0.0001 \
+            --regressor_projection_dim 20 \
+            --use_regressor \
+            --regressor_type linear_ucb \
+            --optoprime_version v2
+# different linear regressor
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 31 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --test_frequency 5 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_regularization_strength 0.0001 \
+        --regressor_transformation_exploration_factor 1.0 \
+        --run_name "PS-Linear-regressor-Sep30-t_1.0" \
+        --use_regressor \
+        --regressor_type linear \
+        --optoprime_version v2
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 31 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --test_frequency 5 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_regularization_strength 0.0001 \
+        --regressor_transformation_exploration_factor 0.0 \
+        --run_name "PS-Linear-regressor-Sep30-t_0.0" \
+        --use_regressor \
+        --regressor_type linear \
+        --optoprime_version v2
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 2 \
+        --num_steps 31 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --test_frequency 5 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 5 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_regularization_strength 0.0001 \
+        --regressor_transformation_exploration_factor 0.5 \
+        --run_name "PS-Linear-regressor-Sep30-t_0.5" \
+        --use_regressor \
+        --regressor_type linear \
+        --optoprime_version v2
