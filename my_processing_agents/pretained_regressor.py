@@ -34,7 +34,7 @@ class PretrainedLinearRegressor:
         if not candidate.update_dict:
             return "base_module_parameters"
         # Convert parameter nodes to readable names for deterministic embedding
-        params_with_names = {k.py_name if hasattr(k, 'py_name') else str(k): v for k, v in candidate.update_dict.items()}
+        params_with_names = {k.py_name: v for k, v in candidate.update_dict.items()}
         return str(params_with_names)
     
     def _get_embedding(self, candidate):

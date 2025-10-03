@@ -470,7 +470,7 @@ def main():
                        help='Number of candidates to generate per step')
     parser.add_argument('--num_threads', type=int, default=20,
                        help='Number of threads for parallel processing')
-    parser.add_argument('--test_frequency', type=int, default=5,
+    parser.add_argument('--test_frequency', type=int, default=None,
                        help='How often to run test evaluation')
     parser.add_argument('--save_frequency', type=int, default=None,
                        help='How often to save checkpoints')
