@@ -561,3 +561,28 @@ python my_processing_agents/optimize_tau_agent.py \
         --use_regressor \
         --regressor_type linear \
         --optoprime_version v2
+
+# use pretrained linear regressor
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 51 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --use_best_candidate_to_explore \
+        --test_frequency 5 \
+        --log_frequency 1 \
+        --num_eval_samples 10 \
+        --num_candidates 20 \
+        --num_proposals 1 \
+        --score_range_min 0.0 \
+        --score_range_max 1.0 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --regressor_regularization_strength 0.0001 \
+        --run_name "PS-pretrained-Linear-regressor-Oct3" \
+        --use_regressor \
+        --regressor_type pretrained_linear \
+        --optoprime_version v2

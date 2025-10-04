@@ -32,10 +32,10 @@ from opto.trainer.evaluators import evaluate
 from opto.utils.llm import LLM
 from opto.optimizers.utils import extract_xml_like_data
 from opto.utils.auto_retry import retry_with_exponential_backoff
-
+from opto.optimizers.utils import print_color
 # Agent imports
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
-from pretained_regressor import PretrainedLinearRegressor
+from pretained_regressor import PretrainedLinearRegressor, get_parameter_text
 # Priority search imports - using local definitions to avoid import issues
 # from opto.features.priority_search.priority_search import ModuleCandidate
 # from opto.features.priority_search.search_template import SearchTemplate, Samples, BatchRollout, save_train_config
@@ -56,8 +56,6 @@ litellm.suppress_debug_info = True
 # Provider configuration
 provider = "gemini"
 os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
-
-
 
 
 
@@ -115,7 +113,7 @@ You will receive information about previous parameter configurations and their p
             for i, (score, candidate) in enumerate(sorted_memory[:10]):  # Show top 10
                 memory_text += f"### Configuration {i+1} (Score: {score:.3f})\n"
                 # Format parameters with proper names
-                params_display = {k.py_name if hasattr(k, 'py_name') else str(k): v for k, v in candidate.update_dict.items()}
+                params_display = get_parameter_text(candidate)
                 memory_text += f"Parameters: {params_display}\n\n"
         
         # Get base parameters with proper names
@@ -264,7 +262,13 @@ class RegressorBasedSearch:
         if score > self.best_score:
             self.best_score = score
             self.best_candidate = candidate
-    
+
+    def _print_memory(self):
+        """Print the memory."""
+        for score, candidate in self.memory:
+            print_color(f"Score: {score}", "green")
+            print_color(f"Parameters: {get_parameter_text(candidate)}", "blue")
+
     def train(self,
               guide,
               test_dataset: Dict[str, List[Any]] = None,
@@ -290,8 +294,14 @@ class RegressorBasedSearch:
         self._add_to_memory(base_candidate, base_score)
         
         print(f"Base candidate score: {base_score:.4f}")
+        self._print_memory()
+        # evaluate base candidate
+        base_score = self._evaluate_candidate(base_candidate, guide, test_dataset, num_eval_samples)
+        print(f"Base candidate test score: {base_score:.4f}")
+        self.logger.log('test_score', base_score, 0)
         
         for step in range(num_steps):
+
             step_start_time = time.time()
             print(f"\n=== Step {step + 1}/{num_steps} ===")
             
@@ -315,7 +325,7 @@ class RegressorBasedSearch:
                 score = self.regressor.predict_score(candidate)
                 candidate_scores.append(score)
                 self._add_to_memory(candidate, score)
-            
+            self._print_memory()
             # Log results
             if candidate_scores:
                 avg_score = np.mean(candidate_scores)
@@ -363,20 +373,22 @@ class RegressorBasedSearch:
         test_agent = candidate.get_module()
         
         # Run evaluation
-        try:
-            results = evaluate(
-                agent=test_agent,
-                guide=guide,
-                dataset=dataset,
-                num_eval_samples=num_eval_samples,
-                num_threads=self.num_threads
-            )
-            
-            return safe_mean(results)
+        
+        # Unpack dataset into inputs and infos
+        
+        
+        results = evaluate(
+            agent=test_agent,
+            guide=guide,
+            inputs=dataset['inputs'],
+            infos=dataset['infos'],
+            num_samples=num_eval_samples,
+            num_threads=self.num_threads
+        )
+        
+        return safe_mean(results)
                 
-        except Exception as e:
-            print(f"Error during evaluation: {e}")
-            return 0.0
+        
     
     def _save_checkpoint(self, save_path, step):
         """Save current state to checkpoint."""
@@ -476,7 +488,7 @@ def main():
                        help='How often to save checkpoints')
     parser.add_argument('--save_path', type=str, default='checkpoints/regressor_search_agent.pkl',
                        help='Path to save checkpoints')
-    parser.add_argument('--num_eval_samples', type=int, default=1,
+    parser.add_argument('--num_eval_samples', type=int, default=10,
                        help='Number of times to evaluate each input')
     parser.add_argument('--memory_size', type=int, default=100,
                        help='Size of memory to store candidates')

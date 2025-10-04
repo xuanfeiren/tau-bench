@@ -1,12 +1,24 @@
 import numpy as np
 import litellm
 from tau_bench.retry_utils import auto_retry_with_exponential_backoff
+from opto.optimizers.utils import print_color
+from typing import List, Tuple
+from opto.features.priority_search.priority_search import ModuleCandidate
+import time
+from opto.features.priority_search.regressor import RegressorTemplate
 
-
-class PretrainedLinearRegressor:
+def get_parameter_text(candidate):
+        """Get the parameter text for a ModuleCandidate."""
+        if not candidate.update_dict:
+            return "base_module_parameters"
+        # Convert parameter nodes to readable names for deterministic embedding
+        params_with_names = {k.py_name: v for k, v in candidate.update_dict.items()}
+        return str(params_with_names)
+        
+class PretrainedLinearRegressor(RegressorTemplate):
     """Linear regressor that loads pre-trained weights and bias for score prediction."""
     
-    def __init__(self, weights_path: str, bias_path: str, embedding_model="gemini/text-embedding-004"):
+    def __init__(self, weights_path: str, bias_path: str, embedding_model="gemini/text-embedding-004", num_threads=20, **kwargs):
         """Initialize with pre-trained weights and bias."""
         self.embedding_model = embedding_model
         
@@ -16,56 +28,16 @@ class PretrainedLinearRegressor:
         
         self.linear_dim = self.weights.shape[0]
         print(f"Loaded regressor: weights shape {self.weights.shape}, bias {self.bias:.6f}")
-        
+        self.max_candidates_to_predict = 500
+        self.regularization_strength = 0.0001 # Will not be used in this regressor
+        self.num_threads = num_threads
         # For random projection if needed (assuming 768D original embeddings)
         self.original_embedding_dim = 768
-        # if self.linear_dim != self.original_embedding_dim:
-        #     from opto.features.priority_search.regressor import GaussianRandomProjection
-        #     self.random_projector = GaussianRandomProjection(
-        #         input_dim=self.original_embedding_dim,
-        #         output_dim=self.linear_dim,
-        #         random_seed=42
-        #     )
-        # else:
-            # self.random_projector = None
+        self.random_projector = None
     
     def _get_parameter_text(self, candidate):
         """Get the parameter text for a ModuleCandidate."""
-        if not candidate.update_dict:
-            return "base_module_parameters"
-        # Convert parameter nodes to readable names for deterministic embedding
-        params_with_names = {k.py_name: v for k, v in candidate.update_dict.items()}
-        return str(params_with_names)
-    
-    def _get_embedding(self, candidate):
-        """Get the embedding for a ModuleCandidate."""
-        parameter_text = self._get_parameter_text(candidate)
-        
-        def single_embedding_call():
-            return litellm.embedding(
-                model=self.embedding_model,
-                input=parameter_text
-            )
-        
-        try:
-            response = auto_retry_with_exponential_backoff(
-                single_embedding_call,
-                max_retries=10,
-                base_delay=1.0,
-                operation_name="Embedding API call"
-            )
-            embedding = response.data[0].embedding
-            
-            # if self.random_projector is not None:
-            #     # Apply random projection
-            #     embedding_array = np.array(embedding).reshape(1, -1)
-            #     projected = self.random_projector.transform(embedding_array)
-            #     embedding = projected.flatten().tolist()
-            
-            return embedding
-        except Exception as e:
-            print(f"ERROR: Embedding API call failed: {e}")
-            return None
+        return get_parameter_text(candidate)
     
     def predict_score(self, candidate):
         """Predict score for a single candidate."""
@@ -92,3 +64,42 @@ class PretrainedLinearRegressor:
             score = self.predict_score(candidate)
             scores.append(score)
         return scores
+    
+    # The following two functions will be used in regressor-based PrioritySearch algorithm.
+    def update(self, memory: List[Tuple[float, ModuleCandidate]]):
+        """
+        Pretrained regressor does not need to be updated.
+        """
+        pass
+    def predict_scores(self, memory: List[Tuple[float, ModuleCandidate]]):
+        """Predict scores for all candidates in the memory."""
+        # Extract all candidates from memory (memory is a list of (neg_score, candidate) tuples)
+        print_color("Predicting scores for all candidates in the memory using the pretrained regressor...", "blue")
+        if len(memory) == 0:
+            return
+        batch = [candidate for _, candidate in memory]
+
+        # Ensure all candidates have embeddings
+        self._update_memory_embeddings_for_batch(batch)
+        
+        # Collect all embeddings in order
+        embeddings = []
+        for candidate in batch:
+            embeddings.append(candidate.embedding)
+        
+
+        # Batch prediction using vectorized operations
+        X_batch = np.array(embeddings)
+        predicted_scores = X_batch @ self.weights + self.bias
+        
+        # Transform predictions back to [0,1] range
+        # predicted_scores = self._inverse_transform_predictions(predicted_scores_transformed)
+
+        # Clip predicted scores to be between 0 and 1
+        # predicted_scores = np.clip(predicted_scores, 0, 1)
+        
+        # Update each candidate with predicted score as attribute
+        for candidate, predicted_score in zip(batch, predicted_scores):
+            candidate.predicted_score = float(predicted_score)
+            
+        return predicted_scores
