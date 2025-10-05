@@ -103,3 +103,63 @@ class PretrainedLinearRegressor(RegressorTemplate):
             candidate.predicted_score = float(predicted_score)
             
         return predicted_scores
+
+
+class PretrainedLogisticRegressor(RegressorTemplate):
+    """
+    Predict scores using embedding logistic regression for ModuleCandidate objects. 
+    Should have two key methods: predict_scores and predict_scores_for_batch. 
+    predict_scores has no parameters, it could return predicted scores for all candidates in the memory. 
+    predict_scores_for_batch has one parameter, a batch of candidates, it could return predicted scores for the batch of candidates."""
+    
+    def __init__(self, weights_path: str, bias_path: str, embedding_model="gemini/text-embedding-004", num_threads=None):
+        self.embedding_model = embedding_model
+        # Load pre-trained weights and bias
+        self.weights = np.load(weights_path)
+        self.bias = np.load(bias_path).item()  # bias is a scalar
+        self.linear_dim = self.weights.shape[0]
+        self.num_threads = num_threads
+        self.regularization_strength = 0.0001 # Will not be used in this regressor
+        self.max_candidates_to_predict = 500
+        self.random_projector = None
+        
+    def _sigmoid(self, z):
+        """Sigmoid activation function for logistic regression."""
+        return 1.0 / (1.0 + np.exp(-z))
+
+    def update(self, memory: List[Tuple[float, ModuleCandidate]]):
+        """
+        Pretrained logistic regressor does not need to be updated.
+        """
+        pass
+
+    def predict_scores(self,memory):
+        """Predict scores for all candidates in the memory."""
+        # Extract all candidates from memory (memory is a list of (neg_score, candidate) tuples)
+        if len(memory) == 0:
+            return
+        batch = [candidate for _, candidate in memory]
+
+        # Ensure all candidates have embeddings
+        self._update_memory_embeddings_for_batch(batch)
+        
+        # Collect all embeddings in order
+        embeddings = []
+        for candidate in batch:
+            if candidate.embedding:
+                embeddings.append(candidate.embedding)
+            else:
+                candidate.embedding = self._get_embedding(candidate)
+                embeddings.append(candidate.embedding)
+        
+
+        # Batch prediction using vectorized operations
+        X_batch = np.array(embeddings)
+        z = X_batch @ self.weights + self.bias
+        predicted_scores = self._sigmoid(z)
+        
+        # Update each candidate with predicted score as attribute
+        for candidate, predicted_score in zip(batch, predicted_scores):
+            candidate.predicted_score = predicted_score
+            
+        return predicted_scores
