@@ -127,6 +127,31 @@ class PretrainedLogisticRegressor(RegressorTemplate):
         """Sigmoid activation function for logistic regression."""
         return 1.0 / (1.0 + np.exp(-z))
 
+    def predict_score(self, candidate):
+        """Predict score for a single candidate."""
+        if not hasattr(candidate, 'embedding'):
+            candidate.embedding = self._get_embedding(candidate)
+        
+        if candidate.embedding is None:
+            return 0.0
+        
+        # Linear prediction: score = weights @ embedding + bias
+        embedding_array = np.array(candidate.embedding)
+        predicted_score = np.dot(self.weights, embedding_array) + self.bias
+        predicted_score = self._sigmoid(predicted_score)
+        # Clip to [0, 1] range
+        # predicted_score = np.clip(predicted_score, 0, 1)
+        
+        candidate.predicted_score = float(predicted_score)
+        return float(predicted_score)
+    
+    def predict_scores_batch(self, candidates):
+        """Predict scores for a batch of candidates."""
+        scores = []
+        for candidate in candidates:
+            score = self.predict_score(candidate)
+            scores.append(score)
+        return scores
     def update(self, memory: List[Tuple[float, ModuleCandidate]]):
         """
         Pretrained logistic regressor does not need to be updated.

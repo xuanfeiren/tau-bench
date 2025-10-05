@@ -1,6 +1,7 @@
 # Regressor-based search algorithm using pre-trained linear regressor weights
 # This algorithm uses LLM to generate new candidates and evaluates them using a pre-trained regressor
 # python my_processing_agents/regressor_based_search.py --test_frequency 5 --run_name regressor_based_search --num_steps 50
+# python my_processing_agents/regressor_based_search.py --test_frequency 5 --run_name regressor_based_search_logistic --num_steps 50 --regressor_type pretrained_logistic --weights_path regressor_models/logistic_reg_Oct4_weights.npy --bias_path regressor_models/logistic_reg_Oct4_bias.npy
 import numpy as np
 import copy
 import heapq
@@ -35,7 +36,7 @@ from opto.utils.auto_retry import retry_with_exponential_backoff
 from opto.optimizers.utils import print_color
 # Agent imports
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
-from pretained_regressor import PretrainedLinearRegressor, get_parameter_text
+from pretained_regressor import PretrainedLinearRegressor, PretrainedLogisticRegressor, get_parameter_text
 # Priority search imports - using local definitions to avoid import issues
 # from opto.features.priority_search.priority_search import ModuleCandidate
 # from opto.features.priority_search.search_template import SearchTemplate, Samples, BatchRollout, save_train_config
@@ -231,7 +232,7 @@ class RegressorBasedSearch:
     def __init__(self, 
                  agent: trace.Module,
                  optimizer: Optimizer,
-                 regressor: PretrainedLinearRegressor,
+                 regressor: PretrainedLinearRegressor or PretrainedLogisticRegressor,
                  generator: LLMCandidateGenerator,
                  logger: BaseLogger = None,
                  num_threads: int = None,
@@ -506,6 +507,8 @@ def main():
     # Regressor parameters
     # use Oct 3 pretrained linear regressor
     # The other one is trained with LinUCB.
+    parser.add_argument('--regressor_type', type=str, default='pretrained_linear', choices=['pretrained_linear', 'pretrained_logistic'],
+                       help='Type of regressor to use')
     parser.add_argument('--weights_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_Oct3_weights.npy',
                        help='Path to regressor weights')
     parser.add_argument('--bias_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_Oct3_bias.npy',
@@ -578,7 +581,16 @@ def main():
         
         # Initialize regressor
         print(f"Loading regressor from {args.weights_path} and {args.bias_path}")
-        regressor = PretrainedLinearRegressor(
+        if args.regressor_type == 'pretrained_linear':
+            print(f"Loading pretrained linear regressor from {args.weights_path} and {args.bias_path}")
+            regressor = PretrainedLinearRegressor(
+                weights_path=args.weights_path,
+                bias_path=args.bias_path,
+                embedding_model=args.embedding_model
+            )
+        elif args.regressor_type == 'pretrained_logistic':
+            print(f"Loading pretrained logistic regressor from {args.weights_path} and {args.bias_path}")
+            regressor = PretrainedLogisticRegressor(
             weights_path=args.weights_path,
             bias_path=args.bias_path,
             embedding_model=args.embedding_model
