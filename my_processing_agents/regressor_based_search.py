@@ -1,6 +1,6 @@
 # Regressor-based search algorithm using pre-trained linear regressor weights
 # This algorithm uses LLM to generate new candidates and evaluates them using a pre-trained regressor
-
+# python my_processing_agents/regressor_based_search.py --test_frequency 5 --run_name regressor_based_search --num_steps 50
 import numpy as np
 import copy
 import heapq
@@ -504,9 +504,11 @@ def main():
                        help='Temperature for candidate generation')
     
     # Regressor parameters
-    parser.add_argument('--weights_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_weights.npy',
+    # use Oct 3 pretrained linear regressor
+    # The other one is trained with LinUCB.
+    parser.add_argument('--weights_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_Oct3_weights.npy',
                        help='Path to regressor weights')
-    parser.add_argument('--bias_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_bias.npy',
+    parser.add_argument('--bias_path', type=str, default='regressor_models/linear_reg_dim768_reg0.0001_Oct3_bias.npy',
                        help='Path to regressor bias')
     parser.add_argument('--embedding_model', type=str, default='gemini/text-embedding-004',
                        help='Embedding model for regressor')
