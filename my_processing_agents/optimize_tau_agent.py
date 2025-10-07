@@ -20,7 +20,7 @@ from tau_bench.envs.base import Env
 from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
-from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
+from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor, PrioritySearch_with_Regressor_and_Generator
 from opto.features.priority_search.priority_search import PrioritySearch
 from opto.trainer.guide import Guide
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
@@ -224,6 +224,21 @@ def main():
                        help='Optimizer to use')
     parser.add_argument('--use_validation', action='store_true', default=False,
                        help='Whether to use validation, only matters in use_regressor version')
+    
+    # Generator-specific parameters
+    parser.add_argument('--use_generator', action='store_true', default=False,
+                       help='Whether to use the LLM generator for candidate generation')
+    parser.add_argument('--generator_frequency', type=int, default=5,
+                       help='Frequency of generating new candidates using LLM generator')
+    parser.add_argument('--num_generator_candidates', type=int, default=5,
+                       help='Number of candidates to generate using LLM generator')
+    parser.add_argument('--generator_model_name', type=str, default='gemini/gemini-2.0-flash',
+                       help='Model name for the LLM generator')
+    parser.add_argument('--generator_temperature', type=float, default=0.0,
+                       help='Temperature for the LLM generator')
+    parser.add_argument('--generator_verbose', action='store_true', default=False,
+                       help='Whether to enable verbose output for the generator')
+    
     args = parser.parse_args()
     
     try:
@@ -320,13 +335,31 @@ def main():
             'verbose': args.verbose,
             'use_validation': args.use_validation,
             'regressor_rich_text': args.regressor_rich_text,
+            'use_generator': args.use_generator,
+            'generator_frequency': args.generator_frequency,
+            'num_generator_candidates': args.num_generator_candidates,
+            'generator_model_name': args.generator_model_name,
+            'generator_temperature': args.generator_temperature,
+            'generator_verbose': args.generator_verbose,
         }
         
         logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name, config=config_dict)
         
         # Create PrioritySearch algorithm
         print("Creating PrioritySearch algorithm...")
-        if args.use_regressor:
+        if args.use_regressor and args.use_generator:
+            print("Using PrioritySearch with Regressor and Generator")
+            algorithm = PrioritySearch_with_Regressor_and_Generator(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads,
+                generator_model_name=args.generator_model_name,
+                generator_temperature=args.generator_temperature,
+                generator_verbose=args.generator_verbose
+            )
+        elif args.use_regressor:
+            print("Using PrioritySearch with Regressor")
             algorithm = PrioritySearch_with_Regressor(
                 agent=agent,
                 optimizer=optimizer,
@@ -334,12 +367,13 @@ def main():
                 num_threads=args.num_threads
             )
         else:
+            print("Using basic PrioritySearch")
             algorithm = PrioritySearch(
-            agent=agent,
-            optimizer=optimizer,
-            logger=logger,
-            num_threads=args.num_threads
-        )
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
         
         # Set score range for UCB
         score_range = (args.score_range_min, args.score_range_max) if args.score_function == 'ucb' else None
@@ -380,6 +414,9 @@ def main():
             "regressor_projection_dim": args.regressor_projection_dim,
             "regressor_regularization_strength": args.regressor_regularization_strength,
             "regressor_rich_text": args.regressor_rich_text,
+            # Generator-specific parameters
+            "generator_frequency": args.generator_frequency,
+            "num_generator_candidates": args.num_generator_candidates,
         }
         
         # Start training
@@ -400,6 +437,13 @@ def main():
         print(f"Regressor type: {args.regressor_type}")
         print(f"Regressor alpha: {args.regressor_alpha}")
         print(f"Regressor regularization strength: {args.regressor_regularization_strength}")
+        print(f"Use generator: {args.use_generator}")
+        if args.use_generator:
+            print(f"Generator frequency: {args.generator_frequency}")
+            print(f"Number of generator candidates: {args.num_generator_candidates}")
+            print(f"Generator model: {args.generator_model_name}")
+            print(f"Generator temperature: {args.generator_temperature}")
+            print(f"Generator verbose: {args.generator_verbose}")
         import time
         start_time = time.time()
         algorithm.train(**train_params)
