@@ -216,6 +216,8 @@ def main():
                        help='Transformation exploration factor for the regressor')
     parser.add_argument('--regressor_projection_dim', type=int, default=None,
                        help='Projection dimension for the regressor')
+    parser.add_argument('--regressor_rich_text', action='store_true', default=False,
+                       help='Whether to use rich text with problem definition for embeddings')
     parser.add_argument('--optoprime_version', type=str, default='v2', choices=['v1', 'v2'],
                        help='Optimizer to use')
     parser.add_argument('--use_validation', action='store_true', default=False,
@@ -314,6 +316,7 @@ def main():
             'user_model': args.user_model,
             'verbose': args.verbose,
             'use_validation': args.use_validation,
+            'regressor_rich_text': args.regressor_rich_text,
         }
         
         logger = WandbLogger(project=args.project_name, verbose=True, name=args.run_name, config=config_dict)
@@ -373,6 +376,7 @@ def main():
             "regressor_transformation_exploration_factor": args.regressor_transformation_exploration_factor,
             "regressor_projection_dim": args.regressor_projection_dim,
             "regressor_regularization_strength": args.regressor_regularization_strength,
+            "regressor_rich_text": args.regressor_rich_text,
         }
         
         # Start training
