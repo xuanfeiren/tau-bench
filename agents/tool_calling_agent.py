@@ -345,9 +345,54 @@ class ToolCallingAgent_Learn_from_Success(Agent):
 
 
 
+
+
 @trace.model
 class ToolCallingAgent_v2(Agent):
     """Only use the additional instructions as the trainable parameter"""
+    
+    # List of 12 additional instructions (index 0 is the original, 1-12 are new ones)
+    ADDITIONAL_INSTRUCTIONS_LIST = [
+        # Index 0: Original instruction
+        "Here are the additional instructions to help the agent solve the task: ",
+        
+        # Index 1: Slot discipline
+        """Maintain a checklist of required args {order_id, item_ids, new_item_ids, payment_method_id, address}. Ask exactly ONE targeted question at a time to fill the next missing slot.""",
+        
+        # Index 2: Freshen-before-write
+        """Immediately before any write call, re-read the order/user to confirm status and IDs (e.g., get_order_details). If anything changed, repair your plan first.""",
+        
+        # Index 3: ID grounding hygiene
+        """Never invent IDs. Resolve product/item_id from product type + option tuple via read tools; echo the tuple back to the user for confirmation wording only.""",
+        
+        # Index 4: Deterministic candidate pick
+        """If multiple items match the user's description, present up to 3 candidates sorted by (best option match → lowest price → item_id) and ask the user to choose.""",
+        
+        # Index 5: "Once-only" staging buffer
+        """For modify/exchange (one-shot actions), accumulate all item mappings in a staging list; call the tool only when the list is complete.""",
+        
+        # Index 6: Price-diff preview (use calculate)
+        """Before a write, compute and show: old subtotal → new subtotal and Δ. State the required payment method if Δ>0, or refund path if Δ<0.""",
+        
+        # Index 7: Error-repair loop
+        """On tool error (not found / insufficient balance / invalid args), switch to a focused fix: correct the field, propose an alternative (e.g., different payment method/variant), then retry once.""",
+        
+        # Index 8: Post-write verify & stop
+        """After any write, re-read the affected record(s) to verify the intended state. If correct, announce completion concisely and stop; otherwise, repair.""",
+        
+        # Index 9: Minimal-calls planner
+        """Plan the fewest tool calls to reach the goal (read→compute→single write). Avoid redundant reads and never mix talking to the user and tool calls in the same turn.""",
+        
+        # Index 10: Option normalization
+        """Normalize free-text options to catalog keys (e.g., "sky blue"→"blue", "USB-C"→"usb"). If unsure, show exact catalog labels and ask the user to pick.""",
+        
+        # Index 11: Safe ordering for compound goals
+        """For multi-step asks: (1) gather/verify → (2) check constraints → (3) compute cost → (4) act once → (5) verify → (6) next subgoal. Do not interleave writes.""",
+        
+        # Index 12: Write-once guardrail
+        """Track whether a write action (modify/exchange/cancel/return) has been executed; if so, refuse additional writes on the same order and route to the next policy-compliant option."""
+    ]
+    
     def __init__(
         self,
         tools_info: List[Dict[str, Any]],
@@ -355,11 +400,20 @@ class ToolCallingAgent_v2(Agent):
         model: str,
         provider: str,
         temperature: float = 0.0,
+        additional_instructions_index: int = 0,
     ):
         super().__init__()
         self.tools_info = tools_info
         self.wiki = wiki
-        self.additional_instructions = trace.node("Here are the additional instructions to help the agent solve the task: ", trainable=True)
+        
+        # Select the appropriate additional instructions based on index
+        if 0 <= additional_instructions_index < len(self.ADDITIONAL_INSTRUCTIONS_LIST):
+            selected_instruction = self.ADDITIONAL_INSTRUCTIONS_LIST[additional_instructions_index]
+        else:
+            # Default to index 0 if invalid index provided
+            selected_instruction = self.ADDITIONAL_INSTRUCTIONS_LIST[0]
+            
+        self.additional_instructions = trace.node(selected_instruction, trainable=True)
         self.model = model
         self.provider = provider
         self.temperature = temperature

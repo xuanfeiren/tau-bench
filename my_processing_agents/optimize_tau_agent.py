@@ -192,6 +192,8 @@ def main():
     # Model parameters
     parser.add_argument('--model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the agent')
+    parser.add_argument('--additional_instructions_index', type=int, default=0,
+                       help='Index of the additional instructions to use for the agent')
     parser.add_argument('--user_model', type=str, default='gemini-2.0-flash',
                        help='Model to use for the user')
     parser.add_argument('--project_name', type=str, default='tau-bench-priority-search',
@@ -273,7 +275,8 @@ def main():
             wiki=env.wiki,
             model=config.model,
             provider=config.model_provider,
-            temperature=config.temperature
+            temperature=config.temperature,
+            additional_instructions_index=args.additional_instructions_index
         )
         agent.set_env(env)
         
