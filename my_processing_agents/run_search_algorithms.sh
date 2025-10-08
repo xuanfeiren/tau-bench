@@ -586,3 +586,4 @@ python my_processing_agents/optimize_tau_agent.py \
         --use_regressor \
         --regressor_type pretrained_linear \
         --optoprime_version v2
+# debug for generator

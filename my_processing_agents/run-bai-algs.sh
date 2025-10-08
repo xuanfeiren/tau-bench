@@ -183,3 +183,7 @@ python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eva
 python my_processing_agents/run-score-prediction.py  --num_epochs 10  --bai_algo "score_prediction_half" --validate_batch_size 20 --run_name "embedding-regressor-debug"
 
 python my_processing_agents/tau_agent_opt.py --algorithm_name "llm_search" --eval_frequency 5 --log_frequency 1 --num_epochs 20 --train_batch_size 2  --run_name "llm-search-embedding-regressor" --num_test_samples 50 --num_train_samples 50 --num_validate_samples 50 --num_generation_steps 4 --validate_batch_size 20 --num_eval_samples 10 --select_arm_by_predicted_score --num_multiple_generations 1 
+for i in {1..2}; do
+    python my_processing_agents/regressor_based_search.py --test_frequency 5 --run_name regressor_based_search --num_steps 50
+done
+
