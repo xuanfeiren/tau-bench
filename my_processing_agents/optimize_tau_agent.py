@@ -234,7 +234,7 @@ def main():
                        help='Number of candidates to generate using LLM generator')
     parser.add_argument('--generator_model_name', type=str, default='gemini/gemini-2.0-flash',
                        help='Model name for the LLM generator')
-    parser.add_argument('--generator_temperature', type=float, default=0.0,
+    parser.add_argument('--generator_temperature', type=float, default=0.6,
                        help='Temperature for the LLM generator')
     parser.add_argument('--generator_verbose', action='store_true', default=False,
                        help='Whether to enable verbose output for the generator')
