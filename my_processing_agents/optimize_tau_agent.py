@@ -302,7 +302,7 @@ def main():
             optimizer = OptoPrime(agent.parameters(), max_tokens=8000)
         else:
             from opto.optimizers import OptoPrimeV2
-            optimizer = OptoPrimeV2(agent.parameters(), max_tokens=8000)
+            optimizer = OptoPrimeV2(agent.parameters(), max_tokens=25000,initial_var_char_limit=10000)
         optimizer.objective = OBJECTIVE
         
         # Prepare configuration for logging (excluding project_name and run_name)
