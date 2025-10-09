@@ -230,6 +230,10 @@ def main():
                        help='Whether to use the LLM generator for candidate generation')
     parser.add_argument('--generator_frequency', type=int, default=5,
                        help='Frequency of generating new candidates using LLM generator')
+    parser.add_argument('--generator_attempts', type=int, default=50,
+                       help='Number of attempts to generate new candidates using LLM generator')
+    parser.add_argument('--generator_patience', type=int, default=3,
+                       help='Number of attempts to generate new candidates using LLM generator')
     parser.add_argument('--num_generator_candidates', type=int, default=5,
                        help='Number of candidates to generate using LLM generator')
     parser.add_argument('--generator_model_name', type=str, default='gemini/gemini-2.0-flash',
@@ -337,6 +341,8 @@ def main():
             'regressor_rich_text': args.regressor_rich_text,
             'use_generator': args.use_generator,
             'generator_frequency': args.generator_frequency,
+            'generator_attempts': args.generator_attempts,
+            'generator_patience': args.generator_patience,
             'num_generator_candidates': args.num_generator_candidates,
             'generator_model_name': args.generator_model_name,
             'generator_temperature': args.generator_temperature,
@@ -416,6 +422,8 @@ def main():
             "regressor_rich_text": args.regressor_rich_text,
             # Generator-specific parameters
             "generator_frequency": args.generator_frequency,
+            "generator_attempts": args.generator_attempts,
+            "generator_patience": args.generator_patience,
             "num_generator_candidates": args.num_generator_candidates,
         }
         
@@ -440,6 +448,8 @@ def main():
         print(f"Use generator: {args.use_generator}")
         if args.use_generator:
             print(f"Generator frequency: {args.generator_frequency}")
+            print(f"Generator attempts: {args.generator_attempts}")
+            print(f"Generator patience: {args.generator_patience}")
             print(f"Number of generator candidates: {args.num_generator_candidates}")
             print(f"Generator model: {args.generator_model_name}")
             print(f"Generator temperature: {args.generator_temperature}")
