@@ -21,12 +21,13 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 # from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor, PrioritySearch_with_Regressor_and_Generator
-from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
-from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_RG_RejectionSampling as PrioritySearch_with_Regressor_and_Generator
+from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor, PrioritySearch_with_Regressor_and_Generator
+
+# from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_RG_RejectionSampling as PrioritySearch_with_Regressor_and_Generator
 from opto.features.priority_search.priority_search import PrioritySearch
 from opto.trainer.guide import Guide
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
-# Import the agent from separate module to avoid pickle issues
+# Import the agent from separate module to avoid pickle issues-
 # from agents.tool_calling_agent import TrainedToolCallingAgent as ToolCallingAgent
 
 import litellm 
