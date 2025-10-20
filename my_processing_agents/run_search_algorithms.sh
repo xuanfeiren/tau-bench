@@ -742,20 +742,19 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_test_samples 10 \
         --batch_size 2 \
         --num_batches 1 \
-        --num_steps 51 \
+        --num_steps 31 \
         --num_threads 20 \
         --memory_update_frequency 0 \
         --use_best_candidate_to_explore \
         --log_frequency 1 \
-        --num_candidates 10 \
+        --num_candidates 20 \
         --num_proposals 1 \
         --score_range_min 0.0 \
         --score_range_max 1.0 \
-        --project_name "children-study" \
-        --run_name "children-parent-mean-score-plot" \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "logistic-new_explore-Oct20" \
         --regressor_regularization_strength 0.0001 \
         --regressor_rich_text \
         --use_regressor \
         --regressor_type logistic \
         --optoprime_version v2 \
-        --use_validation
