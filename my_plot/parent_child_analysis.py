@@ -18,6 +18,7 @@ from scipy import stats
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.linear_model import LinearRegression
+from scipy.optimize import minimize
 import argparse
 import os
 import sys
@@ -28,6 +29,76 @@ warnings.filterwarnings('ignore')
 # Set style for better plots
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
+
+
+class ExpectileRegression:
+    """Expectile regression implementation for analyzing upper quantiles."""
+    
+    def __init__(self, tau: float = 0.75):
+        """
+        Initialize expectile regression.
+        
+        Args:
+            tau: Expectile level (0.75 focuses on high-scoring children)
+        """
+        self.tau = tau
+        self.coef_ = None
+        self.intercept_ = None
+    
+    def _expectile_loss(self, params: np.ndarray, X: np.ndarray, y: np.ndarray) -> float:
+        """
+        Compute expectile loss function.
+        
+        Args:
+            params: [intercept, slope] parameters
+            X: Parent scores (features)
+            y: Children scores (targets)
+            
+        Returns:
+            Expectile loss value
+        """
+        intercept, slope = params
+        residuals = y - (intercept + slope * X.flatten())
+        
+        # Asymmetric loss function for expectiles
+        loss = np.where(residuals >= 0, 
+                       self.tau * residuals**2, 
+                       (1 - self.tau) * residuals**2)
+        return np.sum(loss)
+    
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """
+        Fit expectile regression model.
+        
+        Args:
+            X: Parent scores (features)
+            y: Children scores (targets)
+        """
+        X = X.reshape(-1, 1) if X.ndim == 1 else X
+        
+        # Initial guess using OLS
+        ols = LinearRegression().fit(X, y)
+        initial_params = [ols.intercept_, ols.coef_[0]]
+        
+        # Optimize expectile loss
+        result = minimize(self._expectile_loss, initial_params, 
+                         args=(X, y), method='BFGS')
+        
+        self.intercept_, self.coef_ = result.x
+        return self
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict using fitted expectile regression.
+        
+        Args:
+            X: Parent scores
+            
+        Returns:
+            Predicted children scores
+        """
+        X = X.reshape(-1, 1) if X.ndim == 1 else X
+        return self.intercept_ + self.coef_ * X.flatten()
 
 
 class ParentChildAnalyzer:
@@ -178,6 +249,44 @@ class ParentChildAnalyzer:
             print(f"⚠️  Error computing regression: {e}")
             stats_dict['regression'] = {}
         
+        # Expectile regression for high-scoring children (if this is predicted data)
+        if 'predicted' in label.lower():
+            try:
+                expectile_reg = ExpectileRegression(tau=0.75)
+                expectile_reg.fit(parent_clean, children_clean)
+                
+                # Predict and compute metrics for expectile regression
+                expectile_pred = expectile_reg.predict(parent_clean)
+                
+                stats_dict['expectile_regression'] = {
+                    'tau': 0.75,
+                    'slope': expectile_reg.coef_,
+                    'intercept': expectile_reg.intercept_,
+                    'mse': mean_squared_error(children_clean, expectile_pred),
+                    'mae': mean_absolute_error(children_clean, expectile_pred),
+                    'rmse': np.sqrt(mean_squared_error(children_clean, expectile_pred))
+                }
+                
+                # Analyze high-scoring children (top 25%)
+                high_score_threshold = np.percentile(children_clean, 75)
+                high_scorers_mask = children_clean >= high_score_threshold
+                
+                if np.sum(high_scorers_mask) > 0:
+                    high_parent = parent_clean[high_scorers_mask]
+                    high_children = children_clean[high_scorers_mask]
+                    
+                    stats_dict['high_scorers_analysis'] = {
+                        'count': np.sum(high_scorers_mask),
+                        'threshold': high_score_threshold,
+                        'parent_mean': np.mean(high_parent),
+                        'children_mean': np.mean(high_children),
+                        'correlation': pearsonr(high_parent, high_children)[0] if len(high_parent) > 1 else 0
+                    }
+                
+            except Exception as e:
+                print(f"⚠️  Error computing expectile regression: {e}")
+                stats_dict['expectile_regression'] = {}
+        
         # Print summary
         self._print_statistics_summary(stats_dict, label)
         
@@ -213,15 +322,32 @@ class ParentChildAnalyzer:
                 print(f"  Kendall τ: {corr['kendall']['tau']:.4f} (p={corr['kendall']['p_value']:.4f})")
         
         if 'regression' in stats_dict and stats_dict['regression']:
-            print(f"\nLinear Regression:")
+            print(f"\nLinear Regression (OLS):")
             reg = stats_dict['regression']
             print(f"  Equation: y = {reg['slope']:.4f}x + {reg['intercept']:.4f}")
             print(f"  R² Score: {reg['r2_score']:.4f}")
             print(f"  RMSE: {reg['rmse']:.4f}")
+        
+        if 'expectile_regression' in stats_dict and stats_dict['expectile_regression']:
+            print(f"\nExpectile Regression (τ=0.75, High Scorers):")
+            exp_reg = stats_dict['expectile_regression']
+            print(f"  Equation: y = {exp_reg['slope']:.4f}x + {exp_reg['intercept']:.4f}")
+            print(f"  RMSE: {exp_reg['rmse']:.4f}")
+            print(f"  Focus: Top 25% of children scores")
+        
+        if 'high_scorers_analysis' in stats_dict and stats_dict['high_scorers_analysis']:
+            print(f"\nHigh-Scoring Children Analysis:")
+            high_stats = stats_dict['high_scorers_analysis']
+            print(f"  Count: {high_stats['count']} (top 25%)")
+            print(f"  Score threshold: ≥{high_stats['threshold']:.4f}")
+            print(f"  Parent mean: {high_stats['parent_mean']:.4f}")
+            print(f"  Children mean: {high_stats['children_mean']:.4f}")
+            print(f"  Correlation: {high_stats['correlation']:.4f}")
     
     def create_comprehensive_plot(self, parent_scores: np.ndarray, children_scores: np.ndarray, 
                                  title: str = "Parent vs Children Scores", 
-                                 save_path: Optional[str] = None) -> plt.Figure:
+                                 save_path: Optional[str] = None,
+                                 include_expectile: bool = False) -> plt.Figure:
         """
         Create a comprehensive analysis plot with statistics embedded.
         
@@ -254,25 +380,48 @@ class ParentChildAnalyzer:
         
         # Add regression line and statistics
         if len(parent_clean) > 1:
+            # Standard OLS regression
             z = np.polyfit(parent_clean, children_clean, 1)
             p = np.poly1d(z)
-            ax_main.plot(parent_clean, p(parent_clean), "red", alpha=0.8, linewidth=2.5, label='Regression Line')
+            ax_main.plot(parent_clean, p(parent_clean), "red", alpha=0.8, linewidth=2.5, label='OLS Regression')
             
             # Calculate comprehensive statistics
             pearson_r, pearson_p = pearsonr(parent_clean, children_clean)
             spearman_r, spearman_p = spearmanr(parent_clean, children_clean)
+            
+            # Add expectile regression if requested
+            expectile_text = ""
+            if include_expectile:
+                try:
+                    # Fit expectile regression (tau=0.75 for high-scoring children)
+                    expectile_reg = ExpectileRegression(tau=0.75)
+                    expectile_reg.fit(parent_clean, children_clean)
+                    
+                    # Plot expectile regression line
+                    parent_sorted = np.sort(parent_clean)
+                    expectile_pred = expectile_reg.predict(parent_sorted)
+                    ax_main.plot(parent_sorted, expectile_pred, "orange", alpha=0.8, linewidth=2.5, 
+                               label='Expectile Regression (τ=0.75)', linestyle='-.')
+                    
+                    expectile_text = f'''
+Expectile τ=0.75 (High Scorers):
+Slope = {expectile_reg.coef_:.3f}
+Intercept = {expectile_reg.intercept_:.3f}'''
+                    
+                except Exception as e:
+                    print(f"⚠️  Expectile regression failed: {e}")
             
             # Create statistics text box
             stats_text = f'''Statistics (n={len(parent_clean)}):
 Pearson r = {pearson_r:.3f} (p={pearson_p:.3f})
 Spearman ρ = {spearman_r:.3f} (p={spearman_p:.3f})
 R² = {pearson_r**2:.3f}
-Slope = {z[0]:.3f}
-Intercept = {z[1]:.3f}'''
+OLS Slope = {z[0]:.3f}
+OLS Intercept = {z[1]:.3f}{expectile_text}'''
             
             ax_main.text(0.05, 0.95, stats_text, transform=ax_main.transAxes, 
                         bbox=dict(boxstyle="round,pad=0.5", facecolor='lightblue', alpha=0.8),
-                        verticalalignment='top', fontsize=10, family='monospace')
+                        verticalalignment='top', fontsize=9, family='monospace')
         
         ax_main.set_xlabel('Parent Scores', fontsize=12, fontweight='bold')
         ax_main.set_ylabel('Children Scores', fontsize=12, fontweight='bold')
@@ -436,7 +585,10 @@ Intercept = {z[1]:.3f}'''
         plot_title = f"Parent vs Children Scores{' - ' + label if label else ''}"
         save_path = f"{label.lower().replace(' ', '_')}_analysis.png" if label else "analysis.png"
         
-        fig = self.create_comprehensive_plot(parent_scores, children_scores, plot_title, save_path)
+        # Enable expectile regression for predicted data analysis
+        include_expectile = "predicted" in label.lower() if label else False
+        
+        fig = self.create_comprehensive_plot(parent_scores, children_scores, plot_title, save_path, include_expectile)
         plt.show()
         
         return {
