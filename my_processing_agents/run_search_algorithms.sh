@@ -758,6 +758,7 @@ python my_processing_agents/optimize_tau_agent.py \
         --use_regressor \
         --regressor_type logistic \
         --optoprime_version v2 \
+
 # visualize children embeddings
 python my_processing_agents/optimize_tau_agent.py \
         --num_train_samples 10 \
@@ -765,12 +766,12 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_test_samples 10 \
         --batch_size 2 \
         --num_batches 10 \
-        --num_steps 10 \
+        --num_steps 30 \
         --num_threads 20 \
         --memory_update_frequency 0 \
         --log_frequency 1 \
         --num_candidates 1 \
-        --num_proposals 1 \
+        --num_proposals 3 \
         --project_name "debug" \
         --run_name "debug-expansive-PS" \
         --regressor_rich_text \
