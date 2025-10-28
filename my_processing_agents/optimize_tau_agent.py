@@ -22,7 +22,8 @@ from tau_bench.model_utils.model.utils import trim_conversation_messages
 from opto.trainer.loggers import WandbLogger, DefaultLogger
 # from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor, PrioritySearch_with_Regressor_and_Generator
 from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor_and_Generator
-from opto.features.priority_search.expansive_priority_search import ExpansivePrioritySearch as PrioritySearch_with_Regressor
+# from opto.features.priority_search.expansive_priority_search import ExpansivePrioritySearch as PrioritySearch_with_Regressor
+from opto.features.priority_search.expansive_priority_search import  PrioritySearch_with_Regressor
 
 
 
