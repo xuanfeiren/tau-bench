@@ -785,14 +785,15 @@ python my_processing_agents/optimize_tau_agent.py \
         --num_test_samples 10 \
         --batch_size 2 \
         --num_batches 10 \
-        --num_steps 31 \
+        --num_steps 101 \
         --num_threads 20 \
         --memory_update_frequency 0 \
         --num_eval_samples 10 \
+        --test_frequency 10 \
         --log_frequency 1 \
         --num_candidates 1 \
         --num_proposals 1 \
-        --project_name "debug" \
+        --project_name "tau-bench-10-tasks-10-evals" \
         --run_name "expansive-PS-select-high-score" \
         --regressor_rich_text \
         --use_regressor \
