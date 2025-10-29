@@ -778,3 +778,44 @@ python my_processing_agents/optimize_tau_agent.py \
         --use_regressor \
         --regressor_type logistic \
         --optoprime_version v2 
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 10 \
+        --num_steps 31 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --log_frequency 1 \
+        --num_candidates 1 \
+        --num_proposals 1 \
+        --project_name "debug" \
+        --run_name "expansive-PS-select-high-score" \
+        --regressor_rich_text \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2 
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 99 \
+        --num_threads 20 \
+        --memory_update_frequency 4 \
+        --test_frequency 8 \
+        --num_eval_samples 10 \
+        --log_frequency 1 \
+        --num_candidates 1 \
+        --num_proposals 1 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "short-term-memory" \
+        --regressor_rich_text \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2 
