@@ -1,4 +1,10 @@
 # Train agent using PrioritySearch algorithm on tau-bench
+# set np and torch seeds
+import numpy as np
+import torch
+np.random.seed(10)
+torch.manual_seed(10)
+
 from tau_bench.envs import get_env
 from tau_bench.types import RunConfig
 from tau_bench.envs.user import UserStrategy
@@ -45,6 +51,7 @@ from datetime import datetime
 # provider = "vertex_ai"
 provider = "gemini"
 os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
+
 
 # litellm._turn_on_debug()
 OBJECTIVE = """Optimize the agent's performance by improving both tool descriptions and additional instructions in #Variables based on #Feedback.
