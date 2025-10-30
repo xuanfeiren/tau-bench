@@ -30,7 +30,7 @@ from opto.trainer.loggers import WandbLogger, DefaultLogger
 from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor_and_Generator
 # from opto.features.priority_search.expansive_priority_search import ExpansivePrioritySearch as PrioritySearch_with_Regressor
 # from opto.features.priority_search.expansive_priority_search import ExpansivePrioritySearch_highscore as PrioritySearch_with_Regressor
-from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_with_Regressor
+from opto.features.priority_search.exhausted_priority_search import ExhaustedPrioritySearch_v2 as PrioritySearch_with_Regressor
 
 
 
