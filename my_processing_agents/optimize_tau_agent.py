@@ -36,7 +36,6 @@ from opto.features.priority_search.exhausted_priority_search import ExhaustedPri
 
 
 # from opto.features.priority_search.priority_search_with_regressor import PrioritySearch_RG_RejectionSampling as PrioritySearch_with_Regressor_and_Generator
-from opto.features.priority_search.priority_search import PrioritySearch
 from opto.trainer.guide import Guide
 from agents.tool_calling_agent import ToolCallingAgent_v2 as ToolCallingAgent
 # Import the agent from separate module to avoid pickle issues-
@@ -258,8 +257,17 @@ def main():
                        help='Temperature for the LLM generator')
     parser.add_argument('--generator_verbose', action='store_true', default=False,
                        help='Whether to enable verbose output for the generator')
+    parser.add_argument('--ablation',action='store_true', default=False,
+                       help='Whether to run ablation study')
     
     args = parser.parse_args()
+
+    if args.ablation:
+        from opto.features.priority_search.priority_search_ablation import PrioritySearch as PrioritySearch
+    else:
+        from opto.features.priority_search.priority_search import PrioritySearch
+    
+
     
     try:
         # Create configuration

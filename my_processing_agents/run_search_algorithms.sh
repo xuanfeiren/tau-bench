@@ -820,3 +820,81 @@ python my_processing_agents/optimize_tau_agent.py \
         --use_regressor \
         --regressor_type logistic \
         --optoprime_version v2 
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --num_candidates 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 31 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --log_frequency 1 \
+        --num_proposals 1 \
+        --project_name "debug" \
+        --run_name "exhausted-priority-search_v2" \
+        --regressor_rich_text \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2 
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --num_candidates 10 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 101 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --test_frequency 10 \
+        --log_frequency 1 \
+        --num_proposals 1 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "AdaptiveExhaustedPS-EnsembleRegressor-eps_0.5" \
+        --regressor_rich_text \
+        --use_regressor \
+        --regressor_type logistic \
+        --optoprime_version v2 
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --num_candidates 5 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 101 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --log_frequency 1 \
+        --num_proposals 1 \
+        --project_name "debug" \
+        --run_name "PS-Nov7" \
+        --optoprime_version v2 \
+        --ablation
+
+python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --num_candidates 5 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 101 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --test_frequency 10 \
+        --log_frequency 1 \
+        --num_proposals 1 \
+        --project_name "tau-bench-10-tasks-10-evals" \
+        --run_name "PS-mean_exploration-Nov7" \
+        --optoprime_version v2 \
+        --ablation
