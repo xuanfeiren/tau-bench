@@ -259,11 +259,16 @@ def main():
                        help='Whether to enable verbose output for the generator')
     parser.add_argument('--ablation',action='store_true', default=False,
                        help='Whether to run ablation study')
+    parser.add_argument('--ucb_exploration',action='store_true', default=False,
+                       help='UCB exploration')
     
     args = parser.parse_args()
 
     if args.ablation:
-        from opto.features.priority_search.priority_search_ablation import PrioritySearch as PrioritySearch
+        if args.ucb_exploration:
+            from opto.features.priority_search.priority_search_ablation import PrioritySearchUCBExploration as PrioritySearch
+        else:
+            from opto.features.priority_search.priority_search_ablation import PrioritySearch as PrioritySearch
     else:
         from opto.features.priority_search.priority_search import PrioritySearch
     

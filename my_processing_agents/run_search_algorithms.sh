@@ -876,9 +876,10 @@ python my_processing_agents/optimize_tau_agent.py \
         --log_frequency 1 \
         --num_proposals 1 \
         --project_name "debug" \
-        --run_name "PS-Nov7" \
+        --run_name "PS-Nov9" \
         --optoprime_version v2 \
-        --ablation
+        --ablation \
+        --ucb_exploration
 
 python my_processing_agents/optimize_tau_agent.py \
         --num_train_samples 10 \
