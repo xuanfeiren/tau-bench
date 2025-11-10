@@ -92,6 +92,32 @@ Your response must contain ONLY these two sections:
 
 Do not include any other text, explanations, or keywords like TERMINATE."""
 
+def get_trajectory_from_output(output: SolveResult):
+    """Get trajectory from the agent's output."""
+    reward, messages, info = output
+    conversation_parts = []
+    for msg in messages:
+        msg_str = f"{msg['role']}: {msg.get('content', '')}"
+        
+        if 'tool_calls' in msg and msg['tool_calls']:
+            tool_calls_str = []
+            for tool_call in msg['tool_calls']:
+                if 'function' in tool_call:
+                    func_name = tool_call['function'].get('name', '')
+                    func_args = tool_call['function'].get('arguments', '')
+                    tool_calls_str.append(f"Tool: {func_name}({func_args})")
+            if tool_calls_str:
+                msg_str += f" [Tool Calls: {'; '.join(tool_calls_str)}]"
+        
+        if msg['role'] == 'tool':
+            tool_name = msg.get('name', '')
+            tool_call_id = msg.get('tool_call_id', '')
+            msg_str = f"tool ({tool_name}, ID: {tool_call_id}): {msg.get('content', '')}"
+        
+        conversation_parts.append(msg_str)
+    
+    return conversation_parts
+
 class TeacherGuide(Guide):
     """Guide that extract reward and feedback from the agent's output."""
     def __init__(self, env: Env, config: RunConfig):
@@ -261,12 +287,18 @@ def main():
                        help='Whether to run ablation study')
     parser.add_argument('--ucb_exploration',action='store_true', default=False,
                        help='UCB exploration')
+    parser.add_argument('--epsnetPS',action='store_true', default=False,
+                       help='Whether to run epsnetPS')
     
     args = parser.parse_args()
 
     if args.ablation:
+        # ucb_exploration or epsnetPS, cannot be used together
+        assert not (args.ucb_exploration and args.epsnetPS), "ucb_exploration and epsnetPS cannot be used together"
         if args.ucb_exploration:
             from opto.features.priority_search.priority_search_ablation import PrioritySearchUCBExploration as PrioritySearch
+        elif args.epsnetPS:
+            from opto.features.priority_search.priority_search_ablation import EpsilonNetPS as PrioritySearch
         else:
             from opto.features.priority_search.priority_search_ablation import PrioritySearch as PrioritySearch
     else:
