@@ -515,11 +515,13 @@ class ToolCallingAgent_v2(Agent):
                 break
                 
         result = SolveResult(reward=reward, info=info, messages=messages, total_cost=total_cost)
-        
+        # for debugging
+        # print(result.info)
+        # breakpoint()
         if result.reward == 1:
-            return result.reward, "Correct", "Correct"
+            return result.reward, result.messages
         else:
-            return result.reward, result.messages, result.info
+            return result.reward, result.messages
         
     def forward(self, task_input):
         """Forward pass of the agent for trainer compatibility."""

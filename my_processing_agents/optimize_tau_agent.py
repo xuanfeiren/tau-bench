@@ -127,7 +127,7 @@ class TeacherGuide(Guide):
         
     def get_feedback(self, task, output: SolveResult, info):   
         """Get feedback from the agent's output."""
-        reward, messages, info = output
+        reward, messages = output
         if info == "BadRequest":
             return 0, "BadRequestError. Please adjust the tool information to the correct form."
         if reward == 1:
@@ -157,9 +157,9 @@ class TeacherGuide(Guide):
             feedback = "The agent failed to solve the task. Here is the conversation history: " + "\n".join(conversation_parts)
         return reward, feedback
         
-    def metric(self, task, output: SolveResult, info):
+    def metric(self, task, output: SolveResult):
         """Metric for the agent's performance."""
-        reward, messages, info = output
+        reward, messages = output
         return reward
 
 def create_retail_dataset(env, num_tasks=10):
@@ -289,6 +289,8 @@ def main():
                        help='UCB exploration')
     parser.add_argument('--epsnetPS',action='store_true', default=False,
                        help='Whether to run epsnetPS')
+    parser.add_argument('--use_summarizer', action='store_true', default=False,
+                       help='Whether to use the summarizer')
     
     args = parser.parse_args()
 
@@ -441,7 +443,9 @@ def main():
                 logger=logger,
                 num_threads=args.num_threads
             )
-        
+        if args.use_summarizer:
+            assert args.epsnetPS, "use_summarizer can only be used with epsnetPS"
+        algorithm.use_summarizer = args.use_summarizer
         # Set score range for UCB
         score_range = (args.score_range_min, args.score_range_max) if args.score_function == 'ucb' else None
         
