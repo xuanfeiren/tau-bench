@@ -157,7 +157,7 @@ class TeacherGuide(Guide):
             feedback = "The agent failed to solve the task. Here is the conversation history: " + "\n".join(conversation_parts)
         return reward, feedback
         
-    def metric(self, task, output: SolveResult):
+    def metric(self, task, output: SolveResult, info):
         """Metric for the agent's performance."""
         reward, messages = output
         return reward
