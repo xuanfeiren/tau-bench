@@ -47,6 +47,7 @@ litellm.suppress_debug_info = True
 import sys
 import os
 from datetime import datetime
+from opto.features.priority_search.priority_search_ablation import ParetobasedPS
 # provider = "vertex_ai"
 provider = "gemini"
 os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
@@ -291,6 +292,8 @@ def main():
                        help='Whether to run epsnetPS')
     parser.add_argument('--use_summarizer', action='store_true', default=False,
                        help='Whether to use the summarizer')
+    parser.add_argument('--pareto',action='store_true',default=False,
+                       help='Whether to use the pareto frontier')
     
     args = parser.parse_args()
 
@@ -430,6 +433,14 @@ def main():
         elif args.use_regressor:
             print("Using PrioritySearch with Regressor")
             algorithm = PrioritySearch_with_Regressor(
+                agent=agent,
+                optimizer=optimizer,
+                logger=logger,
+                num_threads=args.num_threads
+            )
+        elif args.pareto:
+            print("Using Pareto-based PrioritySearch")
+            algorithm = ParetobasedPS(
                 agent=agent,
                 optimizer=optimizer,
                 logger=logger,
