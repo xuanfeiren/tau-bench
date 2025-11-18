@@ -481,11 +481,11 @@ class ToolCallingAgent_v2(Agent):
             
             if step_result is None:
                 print(f"Step {step}: Return None reward due to interaction failure")
-                return None, []
+                return None, messages
             
             if step_result == -1:
                 print(f"Step {step}: Return 0 reward due to BadRequest error")
-                return 0, []
+                return 0, messages
             
             # Extract results
             next_message, action, env_response = step_result
