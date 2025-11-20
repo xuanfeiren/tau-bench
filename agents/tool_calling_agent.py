@@ -686,6 +686,8 @@ class ToolCallingAgentDSPy(dspy.Module):
             raise ValueError("Environment not set. Call set_env() before forward pass.")
             
         current_instruction = self.prog.signature.__doc__
+        # from opto.optimizers.utils import print_color
+        # print_color(f"Current instruction: {current_instruction}\n", "green")
         
         # Call the predictor to register it in the trace for GEPA
         # We ignore the result, but this ensures GEPA sees the module execution

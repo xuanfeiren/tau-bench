@@ -14,4 +14,13 @@ Trace/
 # all logs
 logs/
 
+results/
+wandb/
+
 .vscode/
+
+# Plots
+*.pdf
+
+*.png
+my_processing_agents/*.sh
