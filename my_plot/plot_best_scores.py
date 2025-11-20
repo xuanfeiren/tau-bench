@@ -50,6 +50,18 @@ ALGORITHMS = {
         'color': '#9B59B6',  # Purple
         'linestyle': '-',
         'linewidth': 2.5
+    },
+    'epsnet_0.1-PS': {
+        'display_name': 'EpsNet 0.1 PS',
+        'color': '#FF6B35',  # Orange
+        'linestyle': '-',
+        'linewidth': 2.5
+    },
+    'epsnet_0.1-PS-DetailedSummarizer': {
+        'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
+        'color': '#F39C12',  # Amber/Gold
+        'linestyle': '-',
+        'linewidth': 2.5
     }
 }
 
