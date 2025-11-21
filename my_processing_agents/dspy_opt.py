@@ -22,7 +22,6 @@ torch.manual_seed(10)
 litellm.drop_params = True
 litellm.suppress_debug_info = True
 provider = "gemini"
-os.environ["TRACE_LITELLM_MODEL"] = f"{provider}/gemini-2.0-flash"
 
 # -----------------------------------------------------------------------------
 # 1. Teacher Guide
@@ -161,9 +160,9 @@ def main():
     global _GLOBAL_GUIDE
     parser = argparse.ArgumentParser(description="Optimize Retail Agent Instructions with GEPA")
     parser.add_argument('--num_samples', type=int, default=10, help="Number of tasks to use")
-    parser.add_argument('--model', type=str, default='gemini-2.0-flash', help="LLM model name")
+    parser.add_argument('--model', type=str, default='gemini-2.5-flash-lite', help="LLM model name")
     parser.add_argument('--use_wandb', action='store_true',default=True, help="Enable WandB logging")
-    parser.add_argument('--project', type=str, default='debug')
+    parser.add_argument('--project', type=str, default='debug-DSPy')
     parser.add_argument('--run_name', type=str, default='DSPy_GEPA')
     parser.add_argument('--num_threads', type=int, default=20, help="Parallel evaluation threads")
     parser.add_argument('--max_metric_calls', type=int, default=1000, help="Budget for GEPA")
@@ -182,7 +181,7 @@ def main():
         model_provider=provider,
         user_model_provider=provider,
         model=args.model,
-        user_model="gemini-2.0-flash",
+        user_model=args.model,
         num_trials=1,
         env="retail",
         agent_strategy="tool-calling",
