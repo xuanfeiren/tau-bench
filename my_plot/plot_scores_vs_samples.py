@@ -63,6 +63,12 @@ ALGORITHMS = {
     #     'linestyle': '-',
     #     'linewidth': 2.5
     # },
+    'epsnet_0.1-PS_with_Detailed_summarizer-Nov21': {
+        'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
+        'color': '#F39C12',  # Amber/Gold
+        'linestyle': '-',
+        'linewidth': 2.5
+    },
     'epsnet_0-PS_with_summarizer': {
         'display_name': 'EpsNet 0 PS with Summarizer',
         'color': '#E91E63',  # Pink
