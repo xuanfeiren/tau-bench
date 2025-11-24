@@ -33,48 +33,36 @@ ALGORITHMS = {
         'linestyle': '-',
         'linewidth': 2.5
     },
-    'pareto-PS': {
-        'display_name': 'Pareto-Exploration PS',
-        'color': '#3498DB',  # Blue
-        'linestyle': '-',
-        'linewidth': 2.5
-    },
-    'epsnet_0.01-PS_with_summarizer': {
-        'display_name': 'EpsNet 0.01 PS with Summarizer',
-        'color': '#2ECC71',  # Green
-        'linestyle': '-',
-        'linewidth': 2.5
-    },
+    # 'pareto-PS': {
+    #     'display_name': 'Pareto-Exploration PS',
+    #     'color': '#3498DB',  # Blue
+    #     'linestyle': '-',
+    #     'linewidth': 2.5
+    # },
     'epsnet_0.1-PS_with_summarizer': {
         'display_name': 'EpsNet 0.1 PS with Summarizer',
         'color': '#9B59B6',  # Purple
         'linestyle': '-',
         'linewidth': 2.5
     },
-    # 'epsnet_0.1-PS': {
-    #     'display_name': 'EpsNet 0.1 PS',
-    #     'color': '#FF6B35',  # Orange
-    #     'linestyle': '-',
-    #     'linewidth': 2.5
-    # },
-    # 'epsnet_0.1-PS-DetailedSummarizer': {
-    #     'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
-    #     'color': '#F39C12',  # Amber/Gold
-    #     'linestyle': '-',
-    #     'linewidth': 2.5
-    # },
+    'epsnet_0.1-PS': {
+        'display_name': 'EpsNet 0.1 PS',
+        'color': '#FF6B35',  # Orange
+        'linestyle': '-',
+        'linewidth': 2.5
+    },
     'epsnet_0.1-PS_with_Detailed_summarizer-Nov21': {
         'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
         'color': '#F39C12',  # Amber/Gold
         'linestyle': '-',
         'linewidth': 2.5
     },
-    'epsnet_0-PS_with_summarizer': {
-        'display_name': 'EpsNet 0 PS with Summarizer',
-        'color': '#E91E63',  # Pink
-        'linestyle': '-',
-        'linewidth': 2.5
-    }
+    # 'epsnet_0-PS_with_summarizer': {
+    #     'display_name': 'PS + Summarizer',
+    #     'color': '#E91E63',  # Pink
+    #     'linestyle': '-',
+    #     'linewidth': 2.5
+    # }
 }
 
 PROJECT_NAME = "tau-bench-10-tasks-10-evals"
