@@ -8,6 +8,8 @@ from tau_bench.types import SolveResult, Action, RESPOND_ACTION_NAME
 from tau_bench.retry_utils import auto_retry_with_exponential_backoff
 from opto import trace
 import dspy
+from dspy.signatures import Signature, InputField, OutputField
+from dspy.primitives import Module
 import copy
 
 @trace.model
@@ -556,12 +558,12 @@ class DummyToolCallingAgent(ToolCallingAgent_v2):
 # NEW DSPy Compatible Agent
 # -----------------------------------------------------------------------------
 
-class RetailTaskSignature(dspy.Signature):
+class RetailTaskSignature(Signature):
     """Here are the additional instructions to help the agent solve the task: """
-    x = dspy.InputField(desc="The task index/input")
-    result = dspy.OutputField(desc="The agent execution result")
+    x = InputField(desc="The task index/input")
+    result = OutputField(desc="The agent execution result")
 
-class ToolCallingAgentDSPy(dspy.Module):
+class ToolCallingAgentDSPy(Module):
     """
     A DSPy-compatible version of ToolCallingAgent_v2.
     It uses dspy.Predict to expose the additional_instructions as a trainable parameter (docstring).
