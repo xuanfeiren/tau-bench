@@ -160,7 +160,7 @@ def main():
     global _GLOBAL_GUIDE
     parser = argparse.ArgumentParser(description="Optimize Retail Agent Instructions with GEPA")
     parser.add_argument('--num_samples', type=int, default=10, help="Number of tasks to use")
-    parser.add_argument('--model', type=str, default='gemini-2.5-flash-lite', help="LLM model name", choices=['gemini-2.5-flash-lite', 'gemini-2.0-flash'])
+    parser.add_argument('--model', type=str, default='gemini-2.0-flash', help="LLM model name", choices=['gemini-2.5-flash-lite', 'gemini-2.0-flash'])
     parser.add_argument('--use_wandb', action='store_true',default=True, help="Enable WandB logging")
     parser.add_argument('--project', type=str, default='debug-DSPy')
     parser.add_argument('--run_name', type=str, default='DSPy_GEPA')
