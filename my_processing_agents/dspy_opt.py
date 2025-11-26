@@ -236,7 +236,7 @@ def main():
         use_wandb=args.use_wandb,
         num_threads=args.num_threads,
         wandb_init_kwargs={'project': args.project, 'name': args.run_name} if args.use_wandb else None,
-        log_dir=f"dspy_results/gepa_{time.strftime('%Y%m%d_%H%M%S')}",
+        log_dir=f"dspy_results/gepa_Nov25_8pm",
         log_frequency=args.log_frequency
     )
     
