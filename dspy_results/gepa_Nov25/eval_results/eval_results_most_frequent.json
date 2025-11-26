@@ -1,0 +1,68 @@
+[
+  {
+    "iteration": 0,
+    "total_samples": 10,
+    "program_index": 0,
+    "score": 0.38
+  },
+  {
+    "iteration": 30,
+    "total_samples": 184,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 60,
+    "total_samples": 392,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 90,
+    "total_samples": 552,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 120,
+    "total_samples": 700,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 150,
+    "total_samples": 926,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 180,
+    "total_samples": 1130,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 210,
+    "total_samples": 1336,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 240,
+    "total_samples": 1534,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 270,
+    "total_samples": 1716,
+    "program_index": 5,
+    "score": 0.47
+  },
+  {
+    "iteration": 300,
+    "total_samples": 1878,
+    "program_index": 5,
+    "score": 0.47
+  }
+]

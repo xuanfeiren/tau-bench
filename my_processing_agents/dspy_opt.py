@@ -167,6 +167,7 @@ def main():
     parser.add_argument('--num_threads', type=int, default=20, help="Parallel evaluation threads")
     parser.add_argument('--max_metric_calls', type=int, default=2000, help="Budget for GEPA")
     parser.add_argument('--log_frequency', type=int, default=2, help="Save snapshots every N iterations")
+    parser.add_argument('--log_dir', type=str, default='dspy_results/gepa_Nov25', help="Directory for GEPA logs and snapshots")
     args = parser.parse_args()
 
     # A. Configure DSPy
@@ -236,7 +237,7 @@ def main():
         use_wandb=args.use_wandb,
         num_threads=args.num_threads,
         wandb_init_kwargs={'project': args.project, 'name': args.run_name} if args.use_wandb else None,
-        log_dir=f"dspy_results/gepa_Nov25",
+        log_dir=args.log_dir,
         log_frequency=args.log_frequency
     )
     

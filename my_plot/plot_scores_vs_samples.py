@@ -11,6 +11,7 @@ This script:
 5. Plots test score (y) vs total samples (x) with mean and min/max shaded area
 """
 
+import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,6 +52,20 @@ ALGORITHMS = {
         'linestyle': '-',
         'linewidth': 2.5
     },
+    'DSPy_GEPA_most_frequent': {
+        'display_name': 'DSPy_GEPA most_frequent',
+        'color': '#2ECC71',  # Green
+        'linestyle': '-',
+        'linewidth': 2.5,
+        'local_file': 'dspy_results/gepa_Nov25/eval_results/eval_results_most_frequent.json'
+    },
+    'DSPy_GEPA_sample_by_freq': {
+        'display_name': 'DSPy_GEPA sample_by_freq',
+        'color': '#3498DB',  # Blue
+        'linestyle': '-',
+        'linewidth': 2.5,
+        'local_file': 'dspy_results/gepa_Nov25/eval_results/eval_results_sample_by_freq.json'
+    },
     # 'epsnet_0.1-PS_with_Detailed_summarizer-Nov21': {
     #     'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
     #     'color': '#F39C12',  # Amber/Gold
@@ -68,6 +83,58 @@ ALGORITHMS = {
 PROJECT_NAME = "tau-bench-10-tasks-10-evals"
 SCORE_METRIC = "Test/test_score_empirical_mean"
 SAMPLES_METRIC = "Update/total_samples"
+
+
+def load_local_gepa_data():
+    """
+    Load GEPA evaluation data from local JSON files.
+    
+    Reads algorithms that have 'local_file' key in their config.
+    
+    Returns:
+        DataFrame with columns: algorithm, run_id, step, score, num_samples
+    """
+    print("\nLoading local GEPA data...")
+    
+    all_data = []
+    
+    for algorithm, config in ALGORITHMS.items():
+        if 'local_file' not in config:
+            continue
+        
+        filepath = config['local_file']
+        print(f"  Loading: {filepath}")
+        
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print(f"    Warning: File not found: {filepath}")
+            continue
+        except json.JSONDecodeError as e:
+            print(f"    Warning: Invalid JSON in {filepath}: {e}")
+            continue
+        
+        # Extract data points
+        for entry in data:
+            all_data.append({
+                'algorithm': algorithm,
+                'run_id': f'{algorithm}_run0',  # Single run per file
+                'step': entry.get('iteration', 0),
+                'score': float(entry['score']),
+                'num_samples': int(entry['total_samples'])
+            })
+        
+        print(f"    Loaded {len(data)} data points")
+    
+    if not all_data:
+        print("  No local GEPA data found")
+        return pd.DataFrame()
+    
+    df = pd.DataFrame(all_data)
+    print(f"Total local GEPA data points: {len(df)}")
+    
+    return df
 
 
 def fetch_wandb_data():
@@ -89,14 +156,16 @@ def fetch_wandb_data():
         exit(1)
     
     all_data = []
-    run_counts = {alg: 0 for alg in ALGORITHMS.keys()}
+    # Only count wandb algorithms (those without local_file)
+    wandb_algorithms = {alg: config for alg, config in ALGORITHMS.items() if 'local_file' not in config}
+    run_counts = {alg: 0 for alg in wandb_algorithms.keys()}
     
     print("\nFetching runs...")
     for run in runs:
         run_name = run.name
         
-        # Check if this run matches any of our target algorithms
-        if run_name not in ALGORITHMS:
+        # Check if this run matches any of our target wandb algorithms
+        if run_name not in wandb_algorithms:
             continue
         
         algorithm = run_name
@@ -141,15 +210,15 @@ def fetch_wandb_data():
         print(f"{algorithm}: {count} runs")
     
     if not all_data:
-        print("\nError: No data found for the specified algorithms and metrics.")
-        exit(1)
+        print("\nNo wandb data found for the specified algorithms.")
+        return pd.DataFrame()
     
     df = pd.DataFrame(all_data)
-    print(f"\nTotal data points fetched: {len(df)}")
+    print(f"\nTotal wandb data points fetched: {len(df)}")
     
     # Diagnostic: Show sample ranges per algorithm
-    print("\n=== Sample Ranges Per Algorithm ===")
-    for algorithm in ALGORITHMS.keys():
+    print("\n=== Sample Ranges Per Algorithm (wandb) ===")
+    for algorithm in wandb_algorithms.keys():
         alg_data = df[df['algorithm'] == algorithm]
         if not alg_data.empty:
             min_samples = alg_data['num_samples'].min()
@@ -446,7 +515,18 @@ def main():
     print("="*70)
     
     # Step 1: Fetch data from wandb
-    raw_df = fetch_wandb_data()
+    wandb_df = fetch_wandb_data()
+    
+    # Step 1b: Load local GEPA data
+    local_df = load_local_gepa_data()
+    
+    # Merge data sources
+    dfs_to_concat = [df for df in [wandb_df, local_df] if not df.empty]
+    if not dfs_to_concat:
+        print("\nError: No data found from any source.")
+        exit(1)
+    raw_df = pd.concat(dfs_to_concat, ignore_index=True)
+    print(f"\nTotal combined data points: {len(raw_df)}")
     
     # Step 2: Calculate best score so far (cumulative max) for each run
     df_with_cummax = calculate_best_score_so_far(raw_df)
