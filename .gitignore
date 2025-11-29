@@ -10,6 +10,10 @@ __pycache__/
 
 # Trace repo
 Trace/
+# gepa-repo
+gepa-repo/
+# dspy-repo
+dspy-repo/
 
 # all logs
 logs/
