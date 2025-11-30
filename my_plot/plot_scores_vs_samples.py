@@ -12,6 +12,7 @@ This script:
 """
 
 import json
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,14 +58,16 @@ ALGORITHMS = {
         'color': '#2ECC71',  # Green
         'linestyle': '-',
         'linewidth': 2.5,
-        'local_file': 'dspy_results/gepa_Nov25/eval_results/eval_results_most_frequent.json'
+        'local_dir_pattern': 'dspy_results/gepa_Nov25_{run_num}/eval_results/eval_results_most_frequent.json',
+        'num_runs': 6  # Will try runs 1-6
     },
     'DSPy_GEPA_sample_by_freq': {
         'display_name': 'DSPy_GEPA sample_by_freq',
         'color': '#3498DB',  # Blue
         'linestyle': '-',
         'linewidth': 2.5,
-        'local_file': 'dspy_results/gepa_Nov25/eval_results/eval_results_sample_by_freq.json'
+        'local_dir_pattern': 'dspy_results/gepa_Nov25_{run_num}/eval_results/eval_results_sample_by_freq.json',
+        'num_runs': 6  # Will try runs 1-6
     },
     # 'epsnet_0.1-PS_with_Detailed_summarizer-Nov21': {
     #     'display_name': 'EpsNet 0.1 PS Detailed Summarizer',
@@ -72,12 +75,12 @@ ALGORITHMS = {
     #     'linestyle': '-',
     #     'linewidth': 2.5
     # },
-    # 'epsnet_0-PS_with_summarizer': {
-    #     'display_name': 'PS + Summarizer',
-    #     'color': '#E91E63',  # Pink
-    #     'linestyle': '-',
-    #     'linewidth': 2.5
-    # }
+    'epsnet_0-PS_with_summarizer': {
+        'display_name': 'PS + Summarizer',
+        'color': '#E91E63',  # Pink
+        'linestyle': '-',
+        'linewidth': 2.5
+    }
 }
 
 PROJECT_NAME = "tau-bench-10-tasks-10-evals"
@@ -89,7 +92,8 @@ def load_local_gepa_data():
     """
     Load GEPA evaluation data from local JSON files.
     
-    Reads algorithms that have 'local_file' key in their config.
+    Reads algorithms that have 'local_dir_pattern' key in their config.
+    Supports multiple runs by looping through run numbers 1 to num_runs.
     
     Returns:
         DataFrame with columns: algorithm, run_id, step, score, num_samples
@@ -99,33 +103,45 @@ def load_local_gepa_data():
     all_data = []
     
     for algorithm, config in ALGORITHMS.items():
-        if 'local_file' not in config:
+        if 'local_dir_pattern' not in config:
             continue
         
-        filepath = config['local_file']
-        print(f"  Loading: {filepath}")
+        num_runs = config.get('num_runs', 1)
+        pattern = config['local_dir_pattern']
+        runs_loaded = 0
         
-        try:
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-        except FileNotFoundError:
-            print(f"    Warning: File not found: {filepath}")
-            continue
-        except json.JSONDecodeError as e:
-            print(f"    Warning: Invalid JSON in {filepath}: {e}")
-            continue
+        print(f"  {algorithm}: checking {num_runs} potential runs...")
         
-        # Extract data points
-        for entry in data:
-            all_data.append({
-                'algorithm': algorithm,
-                'run_id': f'{algorithm}_run0',  # Single run per file
-                'step': entry.get('iteration', 0),
-                'score': float(entry['score']),
-                'num_samples': int(entry['total_samples'])
-            })
+        for run_num in range(1, num_runs + 1):
+            filepath = pattern.format(run_num=run_num)
+            
+            if not os.path.exists(filepath):
+                continue  # Skip missing runs
+            
+            print(f"    Loading run {run_num}: {filepath}")
+            
+            try:
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"      Warning: Invalid JSON in {filepath}: {e}")
+                continue
+            
+            # Extract data points with unique run_id
+            run_id = f'{algorithm}_run{run_num}'
+            for entry in data:
+                all_data.append({
+                    'algorithm': algorithm,
+                    'run_id': run_id,
+                    'step': entry.get('iteration', 0),
+                    'score': float(entry['score']),
+                    'num_samples': int(entry['total_samples'])
+                })
+            
+            runs_loaded += 1
+            print(f"      Loaded {len(data)} data points")
         
-        print(f"    Loaded {len(data)} data points")
+        print(f"    Total runs loaded for {algorithm}: {runs_loaded}")
     
     if not all_data:
         print("  No local GEPA data found")
@@ -156,8 +172,8 @@ def fetch_wandb_data():
         exit(1)
     
     all_data = []
-    # Only count wandb algorithms (those without local_file)
-    wandb_algorithms = {alg: config for alg, config in ALGORITHMS.items() if 'local_file' not in config}
+    # Only count wandb algorithms (those without local_dir_pattern)
+    wandb_algorithms = {alg: config for alg, config in ALGORITHMS.items() if 'local_dir_pattern' not in config}
     run_counts = {alg: 0 for alg in wandb_algorithms.keys()}
     
     print("\nFetching runs...")
@@ -401,8 +417,13 @@ def create_plot(stats_df, output_file='scores_vs_samples.pdf'):
         
         x = alg_data['num_samples'].values
         y_mean = alg_data['mean_score'].values
-        y_min = alg_data['min_score'].values
-        y_max = alg_data['max_score'].values
+        y_std = alg_data['std_score'].fillna(0).values
+        n_runs = alg_data['n_runs'].values
+        
+        # Calculate standard error: std / sqrt(n)
+        y_stderr = y_std / np.sqrt(n_runs)
+        y_lower = y_mean - y_stderr
+        y_upper = y_mean + y_stderr
         
         # Downsample for plotting if too many points
         if len(x) > 200:
@@ -414,13 +435,13 @@ def create_plot(stats_df, output_file='scores_vs_samples.pdf'):
             
             x_plot = x[indices]
             y_mean_plot = y_mean[indices]
-            y_min_plot = y_min[indices]
-            y_max_plot = y_max[indices]
+            y_lower_plot = y_lower[indices]
+            y_upper_plot = y_upper[indices]
         else:
             x_plot = x
             y_mean_plot = y_mean
-            y_min_plot = y_min
-            y_max_plot = y_max
+            y_lower_plot = y_lower
+            y_upper_plot = y_upper
         
         # Plot mean line
         ax.plot(x_plot, y_mean_plot,
@@ -433,8 +454,8 @@ def create_plot(stats_df, output_file='scores_vs_samples.pdf'):
                 label=config['display_name'],
                 zorder=3)
         
-        # Add shaded area for min/max range (use all points for smooth fill)
-        ax.fill_between(x, y_min, y_max,
+        # Add shaded area for standard error range (use all points for smooth fill)
+        ax.fill_between(x, y_lower, y_upper,
                         color=config['color'],
                         alpha=0.2,
                         zorder=1)
@@ -443,7 +464,7 @@ def create_plot(stats_df, output_file='scores_vs_samples.pdf'):
     
     # Customize plot
     ax.set_xlabel('Total Samples', fontsize=14, fontweight='bold')
-    ax.set_ylabel('Best Test Score So Far', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Best Test Score So Far (mean ± stderr)', fontsize=14, fontweight='bold')
     ax.set_title('Test Score vs Total Samples', fontsize=16, fontweight='bold')
     
     # Grid and legend
