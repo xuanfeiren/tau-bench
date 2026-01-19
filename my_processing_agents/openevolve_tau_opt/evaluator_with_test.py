@@ -6,6 +6,7 @@ Test evaluation does NOT count toward cumulative samples.
 import os
 import json
 import sys
+import copy
 from pathlib import Path
 
 # Add tau-bench to path
@@ -91,7 +92,9 @@ def extract_additional_instructions(program_path):
 def evaluate_agent_on_task(agent, env, task_index):
     """Evaluate agent on a single task."""
     try:
-        reward, messages = agent.forward(task_index)
+        # Create a deep copy of the agent to avoid interference between evaluations
+        agent_copy = copy.deepcopy(agent)
+        reward, messages = agent_copy.forward(task_index)
         if reward is None:
             return 0.0
         return float(reward)
