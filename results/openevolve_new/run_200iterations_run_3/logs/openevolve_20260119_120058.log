@@ -1,0 +1,66 @@
+2026-01-19 12:00:58,807 - openevolve.controller - INFO - Logging to results/openevolve_new/run_200iterations_run_3/logs/openevolve_20260119_120058.log
+2026-01-19 12:00:58,810 - openevolve.controller - INFO - Set random seed to 10 for reproducibility
+2026-01-19 12:00:58,834 - openevolve.llm.openai - INFO - Initialized OpenAI LLM with model: gemini-2.0-flash
+2026-01-19 12:00:58,834 - openevolve.llm.ensemble - INFO - Initialized LLM ensemble with models: gemini-2.0-flash (weight: 1.00)
+2026-01-19 12:00:58,846 - openevolve.prompt.sampler - INFO - Initialized prompt sampler
+2026-01-19 12:00:58,846 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-01-19 12:00:58,846 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-01-19 12:01:05,701 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /var/lib/condor/execute/slot1/dir_2027051/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator.py
+2026-01-19 12:01:05,701 - openevolve.evaluator - INFO - Initialized evaluator with /var/lib/condor/execute/slot1/dir_2027051/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator.py
+2026-01-19 12:01:05,702 - openevolve.controller - INFO - Initialized OpenEvolve with /var/lib/condor/execute/slot1/dir_2027051/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/initial_program.py
+2026-01-19 12:01:05,702 - openevolve.evolution_trace - INFO - Evolution tracer initialized: results/openevolve_new/run_200iterations_run_3/evolution_trace.jsonl
+2026-01-19 12:01:05,702 - openevolve.controller - INFO - Evolution tracing enabled: results/openevolve_new/run_200iterations_run_3/evolution_trace.jsonl
+2026-01-19 12:01:05,702 - openevolve.controller - INFO - Adding initial program to database
+2026-01-19 12:02:05,512 - openevolve.evaluator - INFO - Evaluated program 18c28e83-069c-4e5c-9956-40f9619b7259 in 59.81s: combined_score=0.5000, cumulative_samples=10.0000, num_tasks=10.0000, success_rate=0.5000
+2026-01-19 12:02:05,512 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-01-19 12:02:05,513 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-01-19 12:02:05,513 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-01-19 12:02:05,513 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-01-19 12:02:05,513 - openevolve.controller - INFO - Using island-based evolution with 3 islands
+2026-01-19 12:02:05,513 - openevolve.database - INFO - Island Status:
+2026-01-19 12:02:05,513 - openevolve.database - INFO -  * Island 0: 1 programs, best=0.5000, avg=0.5000, diversity=0.00, gen=0 (best: 18c28e83-069c-4e5c-9956-40f9619b7259)
+2026-01-19 12:02:05,513 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-01-19 12:02:05,513 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-01-19 12:02:05,514 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 5 iterations (total: 6)
+2026-01-19 12:02:05,529 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-01-19 12:02:05,554 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-01-19 12:02:05,558 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /var/lib/condor/execute/slot1/dir_2027051/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator.py
+2026-01-19 12:02:05,558 - openevolve.evaluator - INFO - Initialized evaluator with /var/lib/condor/execute/slot1/dir_2027051/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator.py
+2026-01-19 12:02:05,559 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-19 12:02:05,559 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-19 12:03:00,370 - openevolve.evaluator - INFO - Evaluated program cd17afcd-2608-4046-96b7-e6eea1ec0aab in 50.48s: combined_score=0.4000, cumulative_samples=20.0000, num_tasks=10.0000, success_rate=0.4000
+2026-01-19 12:03:00,371 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-19 12:03:00,371 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-19 12:03:00,381 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-01-19 12:03:00,382 - openevolve.process_parallel - INFO - Iteration 1: Program cd17afcd-2608-4046-96b7-e6eea1ec0aab (parent: 18c28e83-069c-4e5c-9956-40f9619b7259) completed in 54.81s
+2026-01-19 12:03:00,382 - openevolve.process_parallel - INFO - Metrics: combined_score=0.4000, cumulative_samples=20.0000, num_tasks=10.0000, success_rate=0.4000
+2026-01-19 12:04:31,393 - openevolve.evaluator - INFO - Evaluated program 71c14298-8a0f-4f8d-9120-1f8e07c7d603 in 86.74s: combined_score=0.2000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:04:31,394 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-19 12:04:31,395 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-19 12:04:31,401 - openevolve.process_parallel - INFO - Iteration 2: Program 71c14298-8a0f-4f8d-9120-1f8e07c7d603 (parent: 18c28e83-069c-4e5c-9956-40f9619b7259) completed in 91.02s
+2026-01-19 12:04:31,401 - openevolve.process_parallel - INFO - Metrics: combined_score=0.2000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:05:33,347 - openevolve.evaluator - INFO - Evaluated program 766510c6-109d-4f44-9062-5ecb1d4fd5e5 in 59.18s: combined_score=0.4000, cumulative_samples=40.0000, num_tasks=10.0000, success_rate=0.4000
+2026-01-19 12:05:33,349 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-19 12:05:33,349 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-19 12:05:33,356 - openevolve.process_parallel - INFO - Iteration 3: Program 766510c6-109d-4f44-9062-5ecb1d4fd5e5 (parent: 18c28e83-069c-4e5c-9956-40f9619b7259) completed in 61.95s
+2026-01-19 12:05:33,356 - openevolve.process_parallel - INFO - Metrics: combined_score=0.4000, cumulative_samples=40.0000, num_tasks=10.0000, success_rate=0.4000
+2026-01-19 12:06:31,806 - openevolve.evaluator - INFO - Evaluated program c1b65789-7cda-42d8-9097-c69d2747dc89 in 52.80s: combined_score=0.2000, cumulative_samples=50.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:06:31,808 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-19 12:06:31,808 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-19 12:06:31,812 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 6, 'diversity': 0}
+2026-01-19 12:06:31,812 - openevolve.process_parallel - INFO - Iteration 4: Program c1b65789-7cda-42d8-9097-c69d2747dc89 (parent: cd17afcd-2608-4046-96b7-e6eea1ec0aab) completed in 58.46s
+2026-01-19 12:06:31,812 - openevolve.process_parallel - INFO - Metrics: combined_score=0.2000, cumulative_samples=50.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:07:50,761 - openevolve.evaluator - INFO - Evaluated program f1630c0e-b986-45ed-ac6d-ec4c2edc9a5c in 74.52s: combined_score=0.2000, cumulative_samples=60.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:07:50,765 - openevolve.database - INFO - New MAP-Elites cell occupied in island 1: {'complexity': 8, 'diversity': 1}
+2026-01-19 12:07:50,766 - openevolve.process_parallel - INFO - Iteration 5: Program f1630c0e-b986-45ed-ac6d-ec4c2edc9a5c (parent: 9b9a4b12-3bef-4513-9e8d-bc2b1518f140) completed in 78.95s
+2026-01-19 12:07:50,766 - openevolve.process_parallel - INFO - Metrics: combined_score=0.2000, cumulative_samples=60.0000, num_tasks=10.0000, success_rate=0.2000
+2026-01-19 12:07:50,766 - openevolve.process_parallel - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-01-19 12:07:50,795 - openevolve.process_parallel - INFO - Stopped process pool
+2026-01-19 12:07:50,795 - openevolve.evolution_trace - INFO - Evolution tracing complete. Total traces: 5
+2026-01-19 12:07:50,795 - openevolve.evolution_trace - INFO - Improvement rate: 0.00%
+2026-01-19 12:07:50,795 - openevolve.evolution_trace - INFO - Best improvements: {'combined_score': -0.09999999999999998, 'cumulative_samples': 50, 'num_tasks': 0, 'success_rate': -0.09999999999999998}
+2026-01-19 12:07:50,795 - openevolve.evolution_trace - INFO - Worst declines: {'combined_score': -0.3, 'cumulative_samples': 10, 'num_tasks': 0, 'success_rate': -0.3}
+2026-01-19 12:07:50,795 - openevolve.controller - INFO - Evolution tracer closed
+2026-01-19 12:07:50,795 - openevolve.controller - INFO - Using tracked best program: 18c28e83-069c-4e5c-9956-40f9619b7259
+2026-01-19 12:07:50,795 - openevolve.controller - INFO - Evolution complete. Best program has metrics: combined_score=0.5000, cumulative_samples=10.0000, num_tasks=10.0000, success_rate=0.5000
+2026-01-19 12:07:50,796 - openevolve.controller - INFO - Saved best program to results/openevolve_new/run_200iterations_run_3/best/best_program.py with program info to results/openevolve_new/run_200iterations_run_3/best/best_program_info.json

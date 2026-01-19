@@ -1,0 +1,12 @@
+{
+  "best_score": 0.5,
+  "best_code": "\"\"\"\nInitial program for OpenEvolve optimization.\nThis file contains the additional_instructions parameter that will be evolved.\n\"\"\"\n\n# EVOLVE-BLOCK-START\nadditional_instructions = \"\"\"Here are the additional instructions to help the agent solve the task: \"\"\"\n# EVOLVE-BLOCK-END\n\n\n\n",
+  "cumulative_samples": 60,
+  "end_time": "2026-01-19T12:07:50.797956",
+  "metrics": {
+    "combined_score": 0.5,
+    "cumulative_samples": 10,
+    "num_tasks": 10,
+    "success_rate": 0.5
+  }
+}

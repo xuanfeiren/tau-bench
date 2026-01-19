@@ -1,0 +1,15 @@
+{
+  "project_name": "tau-bench-200iterations-6runs",
+  "run_name": "run_200iterations_run_3",
+  "num_train_samples": 10,
+  "max_iterations": 5,
+  "parallel_evaluations": 10,
+  "num_workers": 1,
+  "model": "gemini-2.0-flash",
+  "start_time": "2026-01-19T12:00:58.805041",
+  "output_dir": "results/openevolve_new/run_200iterations_run_3",
+  "end_time": "2026-01-19T12:07:50.798125",
+  "best_score": 0.5,
+  "cumulative_samples": 60,
+  "status": "completed"
+}
