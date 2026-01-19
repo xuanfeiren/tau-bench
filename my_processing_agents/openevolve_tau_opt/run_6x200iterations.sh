@@ -40,6 +40,6 @@ python my_processing_agents/openevolve_tau_opt.py \
     --model gemini-2.0-flash \
     --config my_processing_agents/openevolve_tau_opt/config_200iterations.yaml \
     --output_dir results/openevolve_new \
-    --run_name run_200iterations_run_2 \
+    --run_name run_200iterations_run_1 \
     --project_name tau-bench-200iterations-6runs
 
