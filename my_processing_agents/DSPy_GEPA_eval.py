@@ -28,9 +28,9 @@ Caching mechanism:
     score to scores.json, then add the result to eval_results.json.
 
 Usage:
-    python my_processing_agents/DSPy_GEPA_eval.py --dir dspy_results/gepa_Nov25_3 --frequency 30 --select_criterion most_frequent
+    python my_processing_agents/DSPy_GEPA_eval.py --dir dspy_results/gepa_Nov25_5 --frequency 30 --select_criterion most_frequent
 
-    python my_processing_agents/DSPy_GEPA_eval.py --dir dspy_results/gepa_Nov25_3 --frequency 30 --select_criterion sample_by_freq
+    python my_processing_agents/DSPy_GEPA_eval.py --dir dspy_results/gepa_Nov25_5 --frequency 30 --select_criterion sample_by_freq
 """
 
 import os

@@ -28,3 +28,5 @@ wandb/
 
 *.png
 my_processing_agents/*.sh
+
+*.csv
