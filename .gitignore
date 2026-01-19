@@ -19,6 +19,10 @@ dspy-repo/
 logs/
 
 results/
+# Exception: allow specific openevolve run folders
+!results/openevolve_new/run_200iterations_run_1/
+# But still ignore logs within allowed folders
+results/openevolve_new/run_200iterations_run_1/logs/
 wandb/
 
 .vscode/
