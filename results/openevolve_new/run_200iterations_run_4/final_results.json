@@ -1,0 +1,12 @@
+{
+  "best_score": 0.9,
+  "best_code": "\"\"\"\nInitial program for OpenEvolve optimization.\nThis file contains the additional_instructions parameter that will be evolved.\n\"\"\"\n\n# EVOLVE-BLOCK-START\nadditional_instructions = \"\"\"Here are the additional instructions to help the agent solve the task:\n- Understand customer needs: Ask clarifying questions and provide accurate information politely. Adapt to the customer's communication style.\n- Offer alternatives or restock information for unavailable items. Suggest relevant complementary products if helpful. Remain calm, especially with frustrated customers.\n\"\"\"\n# EVOLVE-BLOCK-END\n\n\n\n",
+  "cumulative_samples": 2000,
+  "end_time": "2026-01-20T00:28:43.606448",
+  "metrics": {
+    "combined_score": 0.9,
+    "cumulative_samples": 1170,
+    "num_tasks": 10,
+    "success_rate": 0.9
+  }
+}
