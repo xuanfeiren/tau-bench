@@ -1,0 +1,12 @@
+{
+  "best_score": 0.7,
+  "best_code": "\"\"\"\nInitial program for OpenEvolve optimization.\nThis file contains the additional_instructions parameter that will be evolved.\n\"\"\"\n\n# EVOLVE-BLOCK-START\nadditional_instructions = \"\"\"Here are the additional instructions to help the agent solve the task:\n- **Be Helpful:** Respond helpfully, friendly, and concisely.\n- **Information & Solutions:** Provide accurate information (orders, returns, products) and guide to appropriate resources.\n- **Proactive Assistance:** Anticipate needs, offer solutions, and ask clarifying questions.\n\"\"\"\n# EVOLVE-BLOCK-END\n\n\n\n",
+  "cumulative_samples": 1970,
+  "end_time": "2026-01-20T03:28:37.807149",
+  "metrics": {
+    "combined_score": 0.7,
+    "cumulative_samples": 1080,
+    "num_tasks": 10,
+    "success_rate": 0.7
+  }
+}
