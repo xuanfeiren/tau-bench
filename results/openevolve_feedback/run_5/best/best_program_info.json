@@ -1,0 +1,16 @@
+{
+  "id": "1237fd84-86a0-4294-828d-18b59f5e3aa9",
+  "generation": 1,
+  "iteration": 2,
+  "timestamp": 1769026077.6266956,
+  "parent_id": "cc5dc0e9-22b8-4c9c-b4d2-2c88606f62ce",
+  "metrics": {
+    "combined_score": 0.7,
+    "cumulative_samples": 30,
+    "num_tasks": 10,
+    "success_rate": 0.7,
+    "num_failures": 3
+  },
+  "language": "unknown",
+  "saved_at": 1769039008.3431003
+}
