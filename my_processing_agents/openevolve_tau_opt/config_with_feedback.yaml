@@ -1,0 +1,103 @@
+# OpenEvolve Configuration for Tau Agent Optimization WITH FEEDBACK
+# This config enables rich per-task feedback through artifacts
+
+# General settings
+max_iterations: 50
+checkpoint_interval: 5
+log_level: "INFO"
+random_seed: 10
+
+# Evolution settings
+diff_based_evolution: true
+max_code_length: 10000
+
+# Early stopping - disabled for now to run full iterations
+early_stopping_patience: null
+convergence_threshold: 0.001
+early_stopping_metric: "combined_score"
+
+# LLM configuration
+llm:
+  # Model for evolution
+  models:
+    - name: "gemini-2.0-flash"
+      weight: 1.0
+
+  # API configuration
+  api_base: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  api_key: ${GEMINI_API_KEY}
+
+  # Generation parameters
+  temperature: 0.7
+  top_p: 0.95
+  max_tokens: 8192
+
+  # Request parameters
+  timeout: 120
+  retries: 3
+  retry_delay: 5
+
+# Prompt configuration
+prompt:
+  system_message: "You are an expert at optimizing AI agent instructions for retail customer service tasks. Focus on clarity, specificity, and actionable guidance for tool usage."
+  
+  # Number of examples to include in the prompt
+  num_top_programs: 3
+  num_diverse_programs: 2
+  
+  # Template stochasticity for diversity
+  use_template_stochasticity: true
+  
+  # IMPORTANT: Enable artifacts for feedback!
+  include_artifacts: true
+  max_artifact_bytes: 20480  # 20KB for detailed feedback
+
+# Database configuration
+database:
+  # General settings
+  db_path: null
+  in_memory: true
+  log_prompts: true
+  
+  # Population parameters
+  population_size: 100
+  archive_size: 20
+  num_islands: 3
+  
+  # Island-based evolution
+  migration_interval: 20
+  migration_rate: 0.1
+  
+  # Selection parameters
+  elite_selection_ratio: 0.15
+  exploration_ratio: 0.2
+  exploitation_ratio: 0.65
+  
+  # Feature map for MAP-Elites (use default complexity and diversity)
+  feature_dimensions:
+    - "complexity"
+    - "diversity"
+  
+  feature_bins: 10
+  diversity_reference_size: 20
+
+# Evaluator configuration
+evaluator:
+  # General settings
+  timeout: 600  # 10 minutes per evaluation (tau-bench can be slow)
+  max_retries: 2
+  
+  # Disable cascade evaluation for simpler sample tracking
+  cascade_evaluation: false
+  
+  # Parallel evaluation (within a single program evaluation)
+  parallel_evaluations: 4
+
+# Evolution trace configuration
+evolution_trace:
+  enabled: true
+  format: 'jsonl'
+  include_code: true
+  include_prompts: true
+  buffer_size: 5
+  compress: false
