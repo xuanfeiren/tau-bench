@@ -1,0 +1,15 @@
+{
+  "project_name": "tau-bench-feedback",
+  "run_name": "run_debug",
+  "num_train_samples": 10,
+  "max_iterations": 20,
+  "parallel_evaluations": 10,
+  "num_workers": 1,
+  "model": "gemini-2.0-flash",
+  "feedback_enabled": true,
+  "max_feedback_tasks": 3,
+  "max_conversation_length": 2000,
+  "max_artifact_bytes": 20480,
+  "start_time": "2026-01-20T22:32:19.030534",
+  "output_dir": "results/openevolve_feedback/run_debug"
+}

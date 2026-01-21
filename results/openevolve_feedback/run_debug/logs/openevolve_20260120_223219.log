@@ -1,0 +1,128 @@
+2026-01-20 22:32:19,034 - openevolve.controller - INFO - Logging to results/openevolve_feedback/run_debug/logs/openevolve_20260120_223219.log
+2026-01-20 22:32:19,038 - openevolve.controller - INFO - Set random seed to 10 for reproducibility
+2026-01-20 22:32:19,070 - openevolve.llm.openai - INFO - Initialized OpenAI LLM with model: gemini-2.0-flash
+2026-01-20 22:32:19,070 - openevolve.llm.ensemble - INFO - Initialized LLM ensemble with models: gemini-2.0-flash (weight: 1.00)
+2026-01-20 22:32:19,085 - openevolve.prompt.sampler - INFO - Initialized prompt sampler
+2026-01-20 22:32:19,085 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-01-20 22:32:19,085 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-01-20 22:32:28,903 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /var/lib/condor/execute/slot1/dir_60044/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator_with_feedback.py
+2026-01-20 22:32:28,903 - openevolve.evaluator - INFO - Initialized evaluator with /var/lib/condor/execute/slot1/dir_60044/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator_with_feedback.py
+2026-01-20 22:32:28,903 - openevolve.controller - INFO - Initialized OpenEvolve with /var/lib/condor/execute/slot1/dir_60044/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/initial_program.py
+2026-01-20 22:32:28,903 - openevolve.evolution_trace - INFO - Evolution tracer initialized: results/openevolve_feedback/run_debug/evolution_trace.jsonl
+2026-01-20 22:32:28,903 - openevolve.controller - INFO - Evolution tracing enabled: results/openevolve_feedback/run_debug/evolution_trace.jsonl
+2026-01-20 22:32:28,903 - openevolve.controller - INFO - Adding initial program to database
+2026-01-20 22:33:14,875 - openevolve.evaluator - INFO - Evaluated program 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f in 45.97s: combined_score=0.3000, cumulative_samples=10.0000, num_tasks=10.0000, success_rate=0.3000, num_failures=7.0000
+2026-01-20 22:33:14,876 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-01-20 22:33:14,876 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-01-20 22:33:14,877 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-01-20 22:33:14,877 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-01-20 22:33:14,877 - openevolve.controller - INFO - Using island-based evolution with 3 islands
+2026-01-20 22:33:14,877 - openevolve.database - INFO - Island Status:
+2026-01-20 22:33:14,877 - openevolve.database - INFO -  * Island 0: 1 programs, best=0.3000, avg=0.3000, diversity=0.00, gen=0 (best: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f)
+2026-01-20 22:33:14,877 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-01-20 22:33:14,877 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-01-20 22:33:14,877 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 20 iterations (total: 21)
+2026-01-20 22:33:14,892 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-01-20 22:33:14,936 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-01-20 22:33:14,942 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /var/lib/condor/execute/slot1/dir_60044/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator_with_feedback.py
+2026-01-20 22:33:14,942 - openevolve.evaluator - INFO - Initialized evaluator with /var/lib/condor/execute/slot1/dir_60044/scratch/tau-bench/my_processing_agents/openevolve_tau_opt/evaluator_with_feedback.py
+2026-01-20 22:33:14,944 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:33:14,944 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:33:52,553 - openevolve.evaluator - INFO - Evaluated program 2d88bf9e-54ec-4991-bce7-ec27c6d1d347 in 32.82s: combined_score=0.4000, cumulative_samples=20.0000, num_tasks=10.0000, success_rate=0.4000, num_failures=6.0000
+2026-01-20 22:33:52,557 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:33:52,557 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:33:52,560 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-01-20 22:33:52,560 - openevolve.database - INFO - New best program 2d88bf9e-54ec-4991-bce7-ec27c6d1d347 replaces 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f (combined_score: 0.3000 → 0.4000, +0.1000)
+2026-01-20 22:33:52,561 - openevolve.process_parallel - INFO - Iteration 1: Program 2d88bf9e-54ec-4991-bce7-ec27c6d1d347 (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 37.61s
+2026-01-20 22:33:52,561 - openevolve.process_parallel - INFO - Metrics: combined_score=0.4000, cumulative_samples=20.0000, num_tasks=10.0000, success_rate=0.4000, num_failures=6.0000
+2026-01-20 22:33:52,561 - openevolve.process_parallel - INFO - 🌟 New best solution found at iteration 1: 2d88bf9e-54ec-4991-bce7-ec27c6d1d347
+2026-01-20 22:34:35,781 - openevolve.evaluator - INFO - Evaluated program f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e in 37.90s: combined_score=0.6000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:34:35,783 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:34:35,783 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:34:35,784 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 0}
+2026-01-20 22:34:35,785 - openevolve.database - INFO - New best program f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e replaces 2d88bf9e-54ec-4991-bce7-ec27c6d1d347 (combined_score: 0.4000 → 0.6000, +0.2000)
+2026-01-20 22:34:35,785 - openevolve.process_parallel - INFO - Iteration 2: Program f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 43.23s
+2026-01-20 22:34:35,785 - openevolve.process_parallel - INFO - Metrics: combined_score=0.6000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:34:35,785 - openevolve.process_parallel - INFO - 🌟 New best solution found at iteration 2: f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e
+2026-01-20 22:35:11,430 - openevolve.evaluator - INFO - Evaluated program f2e72709-dd50-4806-9e9d-07a8ca5800a2 in 31.54s: combined_score=0.4000, cumulative_samples=40.0000, num_tasks=10.0000, success_rate=0.4000, num_failures=6.0000
+2026-01-20 22:35:11,435 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:35:11,435 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:35:11,437 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 7, 'diversity': 0}
+2026-01-20 22:35:11,437 - openevolve.process_parallel - INFO - Iteration 3: Program f2e72709-dd50-4806-9e9d-07a8ca5800a2 (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 35.65s
+2026-01-20 22:35:11,437 - openevolve.process_parallel - INFO - Metrics: combined_score=0.4000, cumulative_samples=40.0000, num_tasks=10.0000, success_rate=0.4000, num_failures=6.0000
+2026-01-20 22:36:00,351 - openevolve.evaluator - INFO - Evaluated program 9f388cb7-5048-4c4a-9910-6bdb0c03c742 in 43.51s: combined_score=0.6000, cumulative_samples=50.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:36:00,356 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:36:00,356 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:36:00,360 - openevolve.process_parallel - INFO - Iteration 4: Program 9f388cb7-5048-4c4a-9910-6bdb0c03c742 (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 48.92s
+2026-01-20 22:36:00,360 - openevolve.process_parallel - INFO - Metrics: combined_score=0.6000, cumulative_samples=50.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:36:37,913 - openevolve.evaluator - INFO - Evaluated program 271fadcb-351a-4cd6-ac4d-6a3c6c312a73 in 33.95s: combined_score=0.5000, cumulative_samples=60.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:36:37,916 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:36:37,916 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:36:37,924 - openevolve.database - INFO - New MAP-Elites cell occupied in island 1: {'complexity': 9, 'diversity': 0}
+2026-01-20 22:36:37,934 - openevolve.process_parallel - INFO - Iteration 5: Program 271fadcb-351a-4cd6-ac4d-6a3c6c312a73 (parent: 3a762607-3ff3-4cc4-8426-fdd95b969a39) completed in 37.56s
+2026-01-20 22:36:37,935 - openevolve.process_parallel - INFO - Metrics: combined_score=0.5000, cumulative_samples=60.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:36:37,935 - openevolve.process_parallel - INFO - Checkpoint interval reached at iteration 5
+2026-01-20 22:36:37,935 - openevolve.database - INFO - Island Status:
+2026-01-20 22:36:37,935 - openevolve.database - INFO -    Island 0: 5 programs, best=0.6000, avg=0.4600, diversity=303.10, gen=2 (best: f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e)
+2026-01-20 22:36:37,935 - openevolve.database - INFO -  * Island 1: 2 programs, best=0.6000, avg=0.5500, diversity=30.60, gen=2 (best: 271fadcb-351a-4cd6-ac4d-6a3c6c312a73)
+2026-01-20 22:36:37,935 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=1
+2026-01-20 22:36:37,948 - openevolve.database - INFO - Saved database with 7 programs to results/openevolve_feedback/run_debug/checkpoints/checkpoint_5
+2026-01-20 22:36:37,948 - openevolve.controller - INFO - Saved best program at checkpoint 5 with metrics: combined_score=0.6000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:36:37,949 - openevolve.controller - INFO - Saved checkpoint at iteration 5 to results/openevolve_feedback/run_debug/checkpoints/checkpoint_5
+2026-01-20 22:37:19,326 - openevolve.evaluator - INFO - Evaluated program 92537b27-593c-42ff-929a-8f09724326da in 36.81s: combined_score=0.6000, cumulative_samples=70.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:37:19,328 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:37:19,328 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:37:19,329 - openevolve.process_parallel - INFO - Iteration 6: Program 92537b27-593c-42ff-929a-8f09724326da (parent: f2e72709-dd50-4806-9e9d-07a8ca5800a2) completed in 41.41s
+2026-01-20 22:37:19,329 - openevolve.process_parallel - INFO - Metrics: combined_score=0.6000, cumulative_samples=70.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:38:03,303 - openevolve.evaluator - INFO - Evaluated program 18abe420-ff32-4a63-b198-52ec73a66270 in 39.28s: combined_score=0.5000, cumulative_samples=80.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:38:03,311 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:38:03,311 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:38:03,311 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 8, 'diversity': 0}
+2026-01-20 22:38:03,312 - openevolve.process_parallel - INFO - Iteration 7: Program 18abe420-ff32-4a63-b198-52ec73a66270 (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 43.98s
+2026-01-20 22:38:03,312 - openevolve.process_parallel - INFO - Metrics: combined_score=0.5000, cumulative_samples=80.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:38:41,923 - openevolve.evaluator - INFO - Evaluated program b1d4a786-58de-4781-b994-7721c6681b22 in 35.25s: combined_score=0.3000, cumulative_samples=90.0000, num_tasks=10.0000, success_rate=0.3000, num_failures=7.0000
+2026-01-20 22:38:41,927 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:38:41,927 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:38:41,929 - openevolve.process_parallel - INFO - Iteration 8: Program b1d4a786-58de-4781-b994-7721c6681b22 (parent: 271fadcb-351a-4cd6-ac4d-6a3c6c312a73) completed in 38.61s
+2026-01-20 22:38:41,929 - openevolve.process_parallel - INFO - Metrics: combined_score=0.3000, cumulative_samples=90.0000, num_tasks=10.0000, success_rate=0.3000, num_failures=7.0000
+2026-01-20 22:39:23,817 - openevolve.evaluator - INFO - Evaluated program 2d75ee9b-2a3c-468c-af1e-382573440441 in 36.00s: combined_score=0.5000, cumulative_samples=100.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:39:23,821 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:39:23,821 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:39:23,828 - openevolve.database - INFO - Island 0 MAP-Elites cell improved: {'complexity': 7, 'diversity': 0} (fitness: 0.400 -> 0.500)
+2026-01-20 22:39:23,829 - openevolve.process_parallel - INFO - Iteration 9: Program 2d75ee9b-2a3c-468c-af1e-382573440441 (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 41.89s
+2026-01-20 22:39:23,829 - openevolve.process_parallel - INFO - Metrics: combined_score=0.5000, cumulative_samples=100.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:40:15,987 - openevolve.evaluator - INFO - Evaluated program 5079931a-0057-4e55-aa55-dcc8aaf125ba in 44.68s: combined_score=0.6000, cumulative_samples=110.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:40:15,991 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:40:15,991 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:40:15,993 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 3}
+2026-01-20 22:40:16,003 - openevolve.process_parallel - INFO - Iteration 10: Program 5079931a-0057-4e55-aa55-dcc8aaf125ba (parent: 07a5e8d1-f1a7-46d8-ba98-09379a97ad8f) completed in 52.17s
+2026-01-20 22:40:16,003 - openevolve.process_parallel - INFO - Metrics: combined_score=0.6000, cumulative_samples=110.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:40:16,003 - openevolve.process_parallel - INFO - Checkpoint interval reached at iteration 10
+2026-01-20 22:40:16,004 - openevolve.database - INFO - Island Status:
+2026-01-20 22:40:16,004 - openevolve.database - INFO -  * Island 0: 8 programs, best=0.6000, avg=0.5125, diversity=310.73, gen=4 (best: f3ee11b3-4e09-46e6-a5f9-f6dedda39b7e)
+2026-01-20 22:40:16,004 - openevolve.database - INFO -    Island 1: 3 programs, best=0.6000, avg=0.4667, diversity=26.07, gen=3 (best: 271fadcb-351a-4cd6-ac4d-6a3c6c312a73)
+2026-01-20 22:40:16,004 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=3
+2026-01-20 22:40:16,020 - openevolve.database - INFO - Saved database with 12 programs to results/openevolve_feedback/run_debug/checkpoints/checkpoint_10
+2026-01-20 22:40:16,020 - openevolve.controller - INFO - Saved best program at checkpoint 10 with metrics: combined_score=0.6000, cumulative_samples=30.0000, num_tasks=10.0000, success_rate=0.6000, num_failures=4.0000
+2026-01-20 22:40:16,020 - openevolve.controller - INFO - Saved checkpoint at iteration 10 to results/openevolve_feedback/run_debug/checkpoints/checkpoint_10
+2026-01-20 22:40:55,326 - openevolve.evaluator - INFO - Evaluated program 06ec12eb-9a1c-4cbc-8a6b-30af7542bb8a in 33.87s: combined_score=0.5000, cumulative_samples=120.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:40:55,330 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:40:55,330 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:40:55,330 - openevolve.database - INFO - New MAP-Elites cell occupied in island 1: {'complexity': 8, 'diversity': 1}
+2026-01-20 22:40:55,331 - openevolve.process_parallel - INFO - Iteration 11: Program 06ec12eb-9a1c-4cbc-8a6b-30af7542bb8a (parent: b1d4a786-58de-4781-b994-7721c6681b22) completed in 39.34s
+2026-01-20 22:40:55,331 - openevolve.process_parallel - INFO - Metrics: combined_score=0.5000, cumulative_samples=120.0000, num_tasks=10.0000, success_rate=0.5000, num_failures=5.0000
+2026-01-20 22:41:32,716 - openevolve.controller - INFO - Received signal 2, initiating graceful shutdown...
+2026-01-20 22:41:32,716 - openevolve.process_parallel - INFO - Graceful shutdown requested...
+2026-01-20 22:41:32,716 - openevolve.controller - INFO - Received signal 2, initiating graceful shutdown...
+2026-01-20 22:41:32,717 - openevolve.process_parallel - INFO - Graceful shutdown requested...
+2026-01-20 22:41:32,719 - openevolve.process_parallel - INFO - Shutdown requested, canceling remaining evaluations...
+2026-01-20 22:41:32,719 - openevolve.process_parallel - INFO - ✅ Evolution completed - Shutdown requested
+2026-01-20 22:41:32,719 - openevolve.controller - INFO - Evolution stopped due to shutdown request
+2026-01-20 22:41:33,575 - openevolve.controller - INFO - Force exit requested - terminating immediately
+2026-01-20 22:41:33,575 - openevolve.controller - INFO - Force exit requested - terminating immediately
+2026-01-20 22:41:33,812 - openevolve.controller - INFO - Force exit requested - terminating immediately
+2026-01-20 22:41:33,970 - openevolve.controller - INFO - Force exit requested - terminating immediately
+2026-01-20 22:41:34,071 - openevolve.controller - INFO - Force exit requested - terminating immediately
+2026-01-20 22:41:34,188 - openevolve.llm.ensemble - INFO - Sampled model: gemini-2.0-flash
+2026-01-20 22:41:34,188 - openevolve.llm.openai - WARNING - Skipping seed parameter as Google AI Studio endpoint doesn't support it. Reproducibility may be limited.
+2026-01-20 22:41:34,243 - openevolve.controller - INFO - Force exit requested - terminating immediately
