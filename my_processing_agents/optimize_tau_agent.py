@@ -294,6 +294,8 @@ def main():
                        help='Whether to use the summarizer')
     parser.add_argument('--pareto',action='store_true',default=False,
                        help='Whether to use the pareto frontier')
+    parser.add_argument('--epsilon', type=float, default=0.0,
+                       help='Epsilon for the PrioritySearch')
     
     args = parser.parse_args()
 
@@ -449,6 +451,7 @@ def main():
         else:
             print("Using basic PrioritySearch")
             algorithm = PrioritySearch(
+                epsilon=args.epsilon,
                 agent=agent,
                 optimizer=optimizer,
                 logger=logger,
