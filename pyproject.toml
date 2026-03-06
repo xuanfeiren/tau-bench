@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tau-bench"
+version = "0.1.0"
+description = "τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+
+dependencies = [
+  # τ-bench core
+  "openai>=1.13.3",
+  "mistralai>=0.4.0",
+  "anthropic>=0.26.1",
+  "google-generativeai>=0.5.4",
+  "tenacity>=8.3.0",
+  "termcolor>=2.4.0",
+  "numpy>=1.26.4",
+  "litellm>=1.41.0",
+  # Optimization dependencies
+  "trace-opt",
+  "dspy",
+  "gepa",
+  "openevolve",
+  "torch>=2.0.0",
+  "wandb",
+  "datasets",
+  "pandas",
+  "scikit-learn",
+  "scipy",
+  "seaborn",
+  "matplotlib",
+  "graphviz",
+  "pyyaml",
+  "python-dotenv",
+]
+
+[tool.setuptools]
+packages = { find = {} }
+
+[tool.uv.sources]
+trace-opt = { path = "Trace", editable = true }
+dspy = { path = "dspy-repo", editable = true }
+gepa = { path = "gepa-repo", editable = true }
+openevolve = { path = "openevolve", editable = true }
