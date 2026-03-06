@@ -1,0 +1,18 @@
+uv run python my_processing_agents/optimize_tau_agent.py \
+        --num_train_samples 10 \
+        --num_validate_samples 10 \
+        --num_test_samples 10 \
+        --num_candidates 5 \
+        --batch_size 2 \
+        --num_batches 1 \
+        --num_steps 101 \
+        --num_threads 20 \
+        --memory_update_frequency 0 \
+        --num_eval_samples 10 \
+        --log_frequency 1 \
+        --num_proposals 1 \
+        --project_name "tau-bench-polca" \
+        --optoprime_version v2 \
+        --ablation \
+        --epsnetPS \
+        --use_summarizer

@@ -31,6 +31,9 @@ wandb/
 *.pdf
 
 *.png
-my_processing_agents/*.sh
 
 *.csv
+
+*.json
+*.lock
+*.bin
